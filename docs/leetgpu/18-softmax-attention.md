@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Question** | *Softmax Attention* (medium) on [LeetGPU](https://leetgpu.com/challenges) · [official spec and reference](https://github.com/AlphaGPU/leetgpu-challenges/tree/main/challenges/medium/6_softmax_attention) |
-| **Solution** | [18_softmax_attention.py](18_softmax_attention.py) |
+| **Solution** | [18_softmax_attention.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/18_softmax_attention.py) |
 | **Task** | $\text{softmax}(QK^T/\sqrt d)\,V$; Q: M × d, K, V: N × d; d ≤ 128; float32; perf M = 512, N = 256, d = 128; tolerance 1e-4 |
 | **Bound by** | latency at the perf size; compute (`tl.dot`) at large sizes |
 

@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Question** | *N-body Gravitational Force* (medium) on [LeetGPU](https://leetgpu.com/challenges) · [official spec and reference](https://github.com/AlphaGPU/leetgpu-challenges/tree/main/challenges/medium/101_n_body_force) |
-| **Solution** | [13_n_body_force.py](13_n_body_force.py) |
+| **Solution** | [13_n_body_force.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/13_n_body_force.py) |
 | **Task** | $F_i = \sum_j m_j (p_j - p_i) / (\lVert p_j - p_i\rVert^2 + \epsilon^2)^{3/2}$, ε = 1e-3; N ≤ 65,536; perf N = 8192; tolerance 1e-2 |
 | **Bound by** | FP32 compute |
 

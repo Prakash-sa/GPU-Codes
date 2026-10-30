@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Question** | *Fused LayerNorm Linear GELU* (medium) on [LeetGPU](https://leetgpu.com/challenges) · [official spec and reference](https://github.com/AlphaGPU/leetgpu-challenges/tree/main/challenges/medium/131_fused_layernorm_linear_gelu) |
-| **Solution** | [17_fused_layernorm_linear_gelu.py](17_fused_layernorm_linear_gelu.py) |
+| **Solution** | [17_fused_layernorm_linear_gelu.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/17_fused_layernorm_linear_gelu.py) |
 | **Task** | $y = \text{GELU}_{erf}(\text{LN}(x)\,W + b)$; float32; M, K, N ≤ 8192; perf 4096³; tolerance 1e-3; inputs carry a large offset (≈ −1000) |
 | **Bound by** | compute (GEMM) |
 

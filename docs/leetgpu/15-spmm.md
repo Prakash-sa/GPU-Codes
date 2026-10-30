@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Question** | *Sparse Matrix-Dense Matrix Multiplication* (medium) on [LeetGPU](https://leetgpu.com/challenges) · [official spec and reference](https://github.com/AlphaGPU/leetgpu-challenges/tree/main/challenges/medium/75_sparse_matrix_dense_matrix_multiplication) |
-| **Solution** | [15_spmm.py](15_spmm.py) |
+| **Solution** | [15_spmm.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/15_spmm.py) |
 | **Task** | C = A·B, A is M × N with **60–70% zeros, stored dense**, B dense N × K, float32; perf 4096 × 2048 × 512; tolerance 1e-3 |
 | **Bound by** | compute |
 

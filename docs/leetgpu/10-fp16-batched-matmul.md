@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Question** | *FP16 Batched Matrix Multiplication* (medium) on [LeetGPU](https://leetgpu.com/challenges) · [official spec and reference](https://github.com/AlphaGPU/leetgpu-challenges/tree/main/challenges/medium/57_fp16_batched_matmul) |
-| **Solution** | [10_fp16_batched_matmul.py](10_fp16_batched_matmul.py) |
+| **Solution** | [10_fp16_batched_matmul.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/10_fp16_batched_matmul.py) |
 | **Task** | `C[b] = A[b] @ B[b]`, FP16; BATCH ≤ 128, M, N, K ≤ 1024; perf 32 × 256³; tolerance 0.05 |
 | **Bound by** | latency / occupancy (each matmul is small) |
 

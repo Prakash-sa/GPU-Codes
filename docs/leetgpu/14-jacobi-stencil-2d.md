@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Question** | *2D Jacobi Stencil* (medium) on [LeetGPU](https://leetgpu.com/challenges) · [official spec and reference](https://github.com/AlphaGPU/leetgpu-challenges/tree/main/challenges/medium/69_jacobi_stencil_2d) |
-| **Solution** | [14_jacobi_stencil_2d.py](14_jacobi_stencil_2d.py) |
+| **Solution** | [14_jacobi_stencil_2d.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/14_jacobi_stencil_2d.py) |
 | **Task** | interior: average of 4 neighbours; boundary: copy; up to 16,384²; perf 8192²; tolerance 1e-5 |
 | **Bound by** | memory bandwidth |
 

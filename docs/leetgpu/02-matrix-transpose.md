@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Question** | *Matrix Transpose* (easy) on [LeetGPU](https://leetgpu.com/challenges) · [official spec and reference](https://github.com/AlphaGPU/leetgpu-challenges/tree/main/challenges/easy/3_matrix_transpose) |
-| **Solution** | [02_matrix_transpose.py](02_matrix_transpose.py) |
+| **Solution** | [02_matrix_transpose.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/02_matrix_transpose.py) |
 | **Task** | `output[c, r] = input[r, c]`, float32, up to 8192²; perf 7000 × 6000; tolerance 1e-5 |
 | **Bound by** | memory bandwidth, if both sides are coalesced |
 

@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Question** | *Nearest Neighbor* (medium) on [LeetGPU](https://leetgpu.com/challenges) · [official spec and reference](https://github.com/AlphaGPU/leetgpu-challenges/tree/main/challenges/medium/38_nearest_neighbor) |
-| **Solution** | [12_nearest_neighbor.py](12_nearest_neighbor.py) |
+| **Solution** | [12_nearest_neighbor.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/12_nearest_neighbor.py) |
 | **Task** | for each point, the index j ≠ i of the closest point; N ≤ 100K; perf N = 10K; **exact match** (atol = 0) |
 | **Bound by** | FP32 compute ($O(N^2)$ distance evaluations) |
 

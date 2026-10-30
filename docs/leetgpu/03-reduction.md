@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Question** | *Reduction* (medium) on [LeetGPU](https://leetgpu.com/challenges) · [official spec and reference](https://github.com/AlphaGPU/leetgpu-challenges/tree/main/challenges/medium/4_reduction) |
-| **Solution** | [03_reduction.py](03_reduction.py) |
+| **Solution** | [03_reduction.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/03_reduction.py) |
 | **Task** | `output[0] = sum(input)`, float32, N ≤ 100M; perf N = 4,194,304; tolerance 1e-5 vs a float64 reference |
 | **Bound by** | bandwidth at large N; launch overhead at the perf size on H100 |
 

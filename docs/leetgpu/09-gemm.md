@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Question** | *General Matrix Multiplication (GEMM)* (medium) on [LeetGPU](https://leetgpu.com/challenges) · [official spec and reference](https://github.com/AlphaGPU/leetgpu-challenges/tree/main/challenges/medium/22_gemm) |
-| **Solution** | [09_gemm.py](09_gemm.py) |
+| **Solution** | [09_gemm.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/09_gemm.py) |
 | **Task** | $C = \alpha AB + \beta C$, FP16 in and out; 16 ≤ M, N, K ≤ 4096; perf 1024³; tolerance 0.05 |
 | **Bound by** | tensor-core compute (at 1024³ on H100: latency, since the problem is small) |
 

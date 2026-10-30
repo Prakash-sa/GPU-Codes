@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Question** | *Vector Addition* (easy) on [LeetGPU](https://leetgpu.com/challenges) · [official spec and reference](https://github.com/AlphaGPU/leetgpu-challenges/tree/main/challenges/easy/1_vector_add) |
-| **Solution** | [01_vector_add.py](01_vector_add.py) |
+| **Solution** | [01_vector_add.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/01_vector_add.py) |
 | **Task** | `C = A + B`, float32, 1 ≤ N ≤ 100M; perf N = 25M; tolerance 1e-5 |
 | **Bound by** | memory bandwidth (1 FLOP per 12 bytes) |
 

@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Question** | *RMS Norm Backward* (medium) on [LeetGPU](https://leetgpu.com/challenges) · [official spec and reference](https://github.com/AlphaGPU/leetgpu-challenges/tree/main/challenges/medium/142_rms_norm_backward) |
-| **Solution** | [19_rms_norm_backward.py](19_rms_norm_backward.py) |
+| **Solution** | [19_rms_norm_backward.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/19_rms_norm_backward.py) |
 | **Task** | given x, w, dy, compute dx and dw; N ≤ 65,536, C ≤ 16,384; perf 16384 × 4096; tolerance 1e-3 |
 | **Bound by** | memory bandwidth |
 

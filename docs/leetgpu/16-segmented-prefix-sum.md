@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Question** | *Segmented Exclusive Prefix Sum* (medium) on [LeetGPU](https://leetgpu.com/challenges) · [official spec and reference](https://github.com/AlphaGPU/leetgpu-challenges/tree/main/challenges/medium/70_segmented_prefix_sum) |
-| **Solution** | [16_segmented_prefix_sum.py](16_segmented_prefix_sum.py) |
+| **Solution** | [16_segmented_prefix_sum.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/16_segmented_prefix_sum.py) |
 | **Task** | `flags[i] = 1` starts a segment; `out[i]` = sum of the earlier values in i's segment; N ≤ 100M; perf N = 50M (segments of 256); tolerance 1e-3 |
 | **Bound by** | memory bandwidth (H100); FP64 throughput risk on T4 |
 

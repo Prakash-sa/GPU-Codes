@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Question** | *Scatter Add* (medium) on [LeetGPU](https://leetgpu.com/challenges) · [official spec and reference](https://github.com/AlphaGPU/leetgpu-challenges/tree/main/challenges/medium/125_scatter_add) |
-| **Solution** | [11_scatter_add.py](11_scatter_add.py) |
+| **Solution** | [11_scatter_add.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/11_scatter_add.py) |
 | **Task** | `output[index[i], :] += src[i, :]`; src N × D float32, index int32; perf N = 1M, D = 128, M = 50K; tolerance 1e-4 |
 | **Bound by** | bandwidth (reading src), plus atomic contention when many rows hit the same target |
 

@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Question** | *Layer Normalization* (medium) on [LeetGPU](https://leetgpu.com/challenges) · [official spec and reference](https://github.com/AlphaGPU/leetgpu-challenges/tree/main/challenges/medium/113_layer_normalization) |
-| **Solution** | [07_layer_norm.py](07_layer_norm.py) |
+| **Solution** | [07_layer_norm.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/07_layer_norm.py) |
 | **Task** | per row of `N × C`: $(x-\mu)/\sqrt{\sigma^2+\epsilon}\cdot w + b$, biased variance; N ≤ 65,536, C ≤ 4096; perf 65536 × 512; tolerance 1e-4 |
 | **Bound by** | memory bandwidth |
 

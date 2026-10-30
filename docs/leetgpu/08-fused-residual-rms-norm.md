@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Question** | *Fused Residual Add and RMS Norm* (medium) on [LeetGPU](https://leetgpu.com/challenges) · [official spec and reference](https://github.com/AlphaGPU/leetgpu-challenges/tree/main/challenges/medium/83_fused_residual_add_rms_norm) |
-| **Solution** | [08_fused_residual_rms_norm.py](08_fused_residual_rms_norm.py) |
+| **Solution** | [08_fused_residual_rms_norm.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/08_fused_residual_rms_norm.py) |
 | **Task** | $z = x + r$, $\text{out} = z / \sqrt{\text{mean}(z^2)+\epsilon} \cdot w$ per row; N, C ≤ 65,536; perf 4096 × 4096; tolerance 1e-5 |
 | **Bound by** | memory bandwidth |
 

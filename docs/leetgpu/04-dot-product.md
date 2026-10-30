@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Question** | *Dot Product* (medium) on [LeetGPU](https://leetgpu.com/challenges) · [official spec and reference](https://github.com/AlphaGPU/leetgpu-challenges/tree/main/challenges/medium/17_dot_product) |
-| **Solution** | [04_dot_product.py](04_dot_product.py) |
+| **Solution** | [04_dot_product.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/04_dot_product.py) |
 | **Task** | `result[0] = sum(A * B)`, float32; perf N = 4,194,304; tolerance 1e-5 |
 | **Bound by** | memory bandwidth (2 FLOPs per 8 bytes) |
 
