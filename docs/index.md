@@ -11,6 +11,7 @@ have run workloads on.
 - **[GPU programming notes](notes/index.md)**: CUDA from the execution model up to
   multi-GPU and profiling.
 - **[Cheat sheet](notes/cheatsheet.md)**: one page of APIs, limits and formulas.
+- **[LeetGPU solutions in Triton](leetgpu/index.md)**: 20 optimized, tested kernels with explanations, T4 vs H100 notes, profiling steps and videos.
 
 ## Reading order
 

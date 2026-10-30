@@ -47,10 +47,17 @@ markdown_extensions:
           format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.arithmatex:
       generic: true
+  - pymdownx.snippets:
+      base_path: ["."]
+      check_paths: true
 
 extra_javascript:
   - javascripts/mathjax.js
   - https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js
+
+exclude_docs: |
+  __pycache__/
+  trace_*.json
 
 nav:
   - Home: index.md
@@ -67,3 +74,26 @@ nav:
       - 8. Programming with Triton: notes/08-triton.md
       - 9. Optimization strategies: notes/09-optimization-strategies.md
       - Cheat sheet: notes/cheatsheet.md
+  - LeetGPU solutions (Triton):
+      - Overview: leetgpu/index.md
+      - Benchmark, profile, scale: leetgpu/benchmarking.md
+      - 01. Vector addition: leetgpu/01-vector-add.md
+      - 02. Matrix transpose: leetgpu/02-matrix-transpose.md
+      - 03. Reduction: leetgpu/03-reduction.md
+      - 04. Dot product: leetgpu/04-dot-product.md
+      - 05. Softmax: leetgpu/05-softmax.md
+      - 06. RMS normalization: leetgpu/06-rms-norm.md
+      - 07. Layer normalization: leetgpu/07-layer-norm.md
+      - 08. Fused residual + RMSNorm: leetgpu/08-fused-residual-rms-norm.md
+      - 09. GEMM: leetgpu/09-gemm.md
+      - 10. FP16 batched matmul: leetgpu/10-fp16-batched-matmul.md
+      - 11. Scatter add: leetgpu/11-scatter-add.md
+      - 12. Nearest neighbor: leetgpu/12-nearest-neighbor.md
+      - 13. N-body force: leetgpu/13-n-body-force.md
+      - 14. 2D Jacobi stencil: leetgpu/14-jacobi-stencil-2d.md
+      - 15. Sparse x dense matmul: leetgpu/15-spmm.md
+      - 16. Segmented prefix sum: leetgpu/16-segmented-prefix-sum.md
+      - 17. LayerNorm + Linear + GELU: leetgpu/17-fused-layernorm-linear-gelu.md
+      - 18. Softmax attention: leetgpu/18-softmax-attention.md
+      - 19. RMSNorm backward: leetgpu/19-rms-norm-backward.md
+      - 20. LayerNorm backward: leetgpu/20-layer-norm-backward.md
