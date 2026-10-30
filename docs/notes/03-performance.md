@@ -2,11 +2,11 @@
 
 ## Start with the roofline
 
-**Arithmetic intensity** \(I = \frac{\text{FLOPs}}{\text{bytes moved to/from DRAM}}\).
+**Arithmetic intensity** $I = \frac{\text{FLOPs}}{\text{bytes moved to/from DRAM}}$.
 
-Attainable performance \(= \min(\text{peak FLOPS},\ I \times \text{peak bandwidth})\).
+Attainable performance $= \min(\text{peak FLOPS},\ I \times \text{peak bandwidth})$.
 
-The **ridge point** \(I^* = \text{peak FLOPS} / \text{peak BW}\) separates the two
+The **ridge point** $I^* = \text{peak FLOPS} / \text{peak BW}$ separates the two
 regimes:
 
 | GPU | FP64 ridge (FLOP/byte) | FP32 ridge (FLOP/byte) |
@@ -15,9 +15,9 @@ regimes:
 | H100 SXM | 34e12 / 3.35e12 ≈ 10 | ≈ 20 |
 | L40S | 1.4e12 / 0.864e12 ≈ 1.6 | ≈ 106 |
 
-- Stencils, LBM, SpMV, and statevector gates have \(I \lesssim 1\), so they are
+- Stencils, LBM, SpMV, and statevector gates have $I \lesssim 1$, so they are
   **memory bound** on every card. Optimize bytes, not FLOPs.
-- Dense GEMM and convolutions have high \(I\), so they are compute bound. Use the
+- Dense GEMM and convolutions have high $I$, so they are compute bound. Use the
   vendor libraries (cuBLAS, cuDNN, CUTLASS) and tensor cores.
 - On cards with low FP64 throughput (T4, L40S, RTX PRO 6000) the FP64 ridge is
   low enough that some FP64 kernels become compute bound.
@@ -33,10 +33,10 @@ Compare with the datasheet peak. 70–85% of peak is excellent for a streaming k
 **LBM example:** each cell reads Q populations and writes Q populations. For D3Q27
 in double precision that is 27 × 8 × 2 = 432 bytes per cell-update, so
 
-\[
+$$
 \text{MLUPS}_{\max} \approx \frac{\text{BW}}{432\ \text{B}} \;\Rightarrow\;
 \text{H100: } \frac{3.35\text{e}12}{432} \approx 7{,}750\ \text{MLUPS}
-\]
+$$
 
 If your MLUPS is far below this, find the extra traffic: uncoalesced access, spills,
 redundant passes, or a separate collide and stream kernel when one fused kernel

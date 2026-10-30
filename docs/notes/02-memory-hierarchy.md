@@ -90,12 +90,92 @@ __global__ void transpose(const float* in, float* out, int n) {
 
 ## Memory capacity planning
 
-Work out the footprint before you allocate:
+Work out the footprint **before** you allocate. Running out of memory partway through
+a run wastes far more time than doing this arithmetic.
 
-- LBM D3Q27, double, two buffers (A/B):
-  \(N_x N_y N_z \times 27 \times 8 \times 2\) bytes. A 256³ grid is ≈ 7.2 GB.
-- Statevector of \(W\) qubits, complex double: \(2^W \times 16\) bytes.
-  30 qubits = 16 GiB, 32 qubits = 64 GiB.
+### The budget
 
-Leave headroom for library workspaces (cuBLAS, cuFFT, NCCL buffers) and the CUDA
-context (~300–500 MB).
+Only part of the card's memory is available for your arrays:
+
+$$
+\text{usable} \approx \underbrace{0.85}_{\text{safety factor}} \times \text{device memory}
+\;-\; \underbrace{\sim 0.5\ \text{GB}}_{\text{CUDA context}}
+\;-\; \text{library workspaces}
+$$
+
+Library workspaces include cuBLAS/cuFFT scratch space, NCCL buffers, and the memory
+pools of CuPy or PyTorch. Check what is actually free at runtime with
+`cudaMemGetInfo(&free, &total)` or `cp.cuda.Device().mem_info`.
+
+### LBM lattices
+
+Each cell stores $Q$ populations. Most solvers keep two copies (A/B ping-pong
+buffers):
+
+$$
+\text{bytes} = N_x N_y N_z \times Q \times \text{sizeof(real)} \times 2
+$$
+
+| Lattice, precision | Bytes per cell | 128³ | 256³ | 512³ |
+|---|---:|---:|---:|---:|
+| D3Q19, double | 304 | 0.64 GB | 5.1 GB | 40.8 GB |
+| D3Q27, single | 216 | 0.45 GB | 3.6 GB | 29.0 GB |
+| D3Q27, double | 432 | 0.91 GB | 7.25 GB | 58.0 GB |
+
+Add any extra fields: macroscopic $\rho, \mathbf{u}$ in double is 32 B per cell,
+and a flag/obstacle mask is 1 B per cell.
+
+**Largest cubic D3Q27 grid that fits** (85% of memory, populations only):
+
+| GPU | Memory | Double | Single |
+|---|---:|---:|---:|
+| T4 | 16 GB | 323³ | 407³ |
+| A100 | 40 GB | 438³ | 552³ |
+| L40S | 48 GB | 466³ | 587³ |
+| H100 | 80 GB | 552³ | 696³ |
+| RTX PRO 6000 | 96 GB | 587³ | 740³ |
+
+Capacity grows with the cube of $N$: doubling the resolution needs **8×** the memory.
+
+### Statevectors
+
+A $W$-qubit statevector holds $2^W$ complex amplitudes:
+
+$$
+\text{bytes} = 2^W \times \begin{cases} 16 & \text{complex128} \\ 8 & \text{complex64} \end{cases}
+$$
+
+| Qubits | complex128 | complex64 |
+|---:|---:|---:|
+| 28 | 4 GiB | 2 GiB |
+| 30 | 16 GiB | 8 GiB |
+| 31 | 32 GiB | 16 GiB |
+| 32 | 64 GiB | 32 GiB |
+| 33 | 128 GiB | 64 GiB |
+
+Every extra qubit **doubles** the memory, so a card twice as large buys you exactly
+one more qubit. Simulators may also need a scratch buffer for some gates, which can
+double the peak.
+
+### Quick calculator
+
+```python
+def lbm_bytes(n, q=27, real=8, buffers=2):
+    return n**3 * q * real * buffers
+
+def statevector_bytes(qubits, complex_bytes=16):
+    return 2**qubits * complex_bytes
+
+def fits(nbytes, device_gb, safety=0.85):
+    return nbytes <= safety * device_gb * 2**30
+
+print(lbm_bytes(256) / 1e9)              # 7.25 GB
+print(fits(statevector_bytes(32), 80))   # True:  64 GiB <= 0.85 x 80 GiB = 68 GiB
+print(fits(statevector_bytes(33), 80))   # False: 128 GiB
+```
+
+!!! tip
+    If it doesn't fit, you have four options, from simplest to hardest: drop to single
+    precision, store fewer copies (in-place streaming such as AA-pattern or esoteric
+    twist halves LBM memory), get a bigger card, or split the domain across GPUs
+    ([multi-GPU](05-multi-gpu.md)).

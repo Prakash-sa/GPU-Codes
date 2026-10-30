@@ -17,6 +17,7 @@ GPU stacks) and a GPU hardware reference sheet.
 | [5. Multi-GPU and NCCL](docs/notes/05-multi-gpu.md) | P2P, NVLink vs PCIe, NCCL collectives, CUDA-aware MPI |
 | [6. Profiling and debugging](docs/notes/06-profiling.md) | Nsight Systems, Nsight Compute, NVTX, compute-sanitizer |
 | [7. GPU from Python](docs/notes/07-python.md) | CuPy, Numba, Triton, PyTorch |
+| [8. Programming with Triton](docs/notes/08-triton.md) | Triton kernels: vector add, fused softmax, stencils, autotuned matmul, debugging |
 | [Cheat sheet](docs/notes/cheatsheet.md) | Quick reference of APIs, limits and formulas |
 
 ## Building locally

@@ -124,7 +124,7 @@ a single card. Its bandwidth is close to the A100's, but its FP64 is much lower.
 - All compute figures are vendor peaks without sparsity. "~" marks a figure derived
   from the FP64:FP32 ratio or rounded from the datasheet. "—" means the datasheet
   gives no figure, or the format isn't a headline spec for that part.
-- Statevector ceiling = the largest \(W\) such that the statevector fits in 85% of
-  device memory. A double statevector takes \(2^W \times 16\) bytes and a single one
-  \(2^W \times 8\) bytes.
+- Statevector ceiling = the largest $W$ such that the statevector fits in 85% of
+  device memory. A double statevector takes $2^W \times 16$ bytes and a single one
+  $2^W \times 8$ bytes.
 - Prices are left out because they vary by region and spot market.

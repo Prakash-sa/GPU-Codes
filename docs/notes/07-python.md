@@ -76,6 +76,8 @@ add_kernel[(triton.cdiv(n, 1024),)](x, y, out, n, BLOCK=1024)
 - Use `@triton.autotune` over `BLOCK` sizes and `num_warps`.
 - FP64 is supported but less tuned than FP32/FP16.
 
+See **[Programming with Triton](08-triton.md)** for the full guide.
+
 ## Interop (zero-copy between libraries)
 
 DLPack and `__cuda_array_interface__` let arrays move between libraries without

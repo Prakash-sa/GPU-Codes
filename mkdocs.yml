@@ -45,6 +45,7 @@ markdown_extensions:
       generic: true
 
 extra_javascript:
+  - javascripts/mathjax.js
   - https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js
 
 nav:
@@ -59,4 +60,5 @@ nav:
       - 5. Multi-GPU and NCCL: notes/05-multi-gpu.md
       - 6. Profiling and debugging: notes/06-profiling.md
       - 7. GPU from Python: notes/07-python.md
+      - 8. Programming with Triton: notes/08-triton.md
       - Cheat sheet: notes/cheatsheet.md

@@ -80,6 +80,6 @@ collectives.
   the surface-to-volume ratio grows.
 - **Weak scaling:** fixed problem per GPU. This should stay flat if communication is
   overlapped.
-- Report parallel efficiency \(E = \frac{T_1}{p\,T_p}\) (strong) or
-  \(E = \frac{T_1}{T_p}\) (weak), and measure the communication fraction with
+- Report parallel efficiency $E = \frac{T_1}{p\,T_p}$ (strong) or
+  $E = \frac{T_1}{T_p}$ (weak), and measure the communication fraction with
   Nsight Systems.

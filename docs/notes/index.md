@@ -12,6 +12,7 @@ is short, with the mental model first and then the practical rules.
 | 5 | [Multi-GPU and NCCL](05-multi-gpu.md) | How do I scale past one card? |
 | 6 | [Profiling and debugging](06-profiling.md) | How do I find out what is really slow or broken? |
 | 7 | [GPU from Python](07-python.md) | CuPy, Numba, Triton or PyTorch: which one? |
+| 8 | [Programming with Triton](08-triton.md) | How do I write fused, tiled kernels in Python? |
 | — | [Cheat sheet](cheatsheet.md) | Quick lookup |
 
 !!! tip "The one rule"
