@@ -18,6 +18,10 @@ for (int c = 0; c < nChunks; ++c) {
 cudaDeviceSynchronize();
 ```
 
+![Animation: serial vs pipelined streams](../assets/img/streams-overlap.gif)
+
+*Splitting the work into chunks on several streams lets the copy engines and the SMs work at the same time. Here that halves the total time.*
+
 What has to be true for overlap:
 
 - Host buffers must be **pinned** (`cudaMallocHost`). With pageable memory the
@@ -53,6 +57,21 @@ The typical pattern for a domain-decomposed solver:
 2. Start the halo exchange (copy or NCCL send/recv) in `comm`.
 3. Compute the **interior** cells in stream `compute` while the exchange runs.
 4. Join the streams with an event before the next step.
+
+```mermaid
+flowchart LR
+    subgraph s1["stream comm"]
+        B[compute boundary cells] --> X[halo exchange]
+    end
+    subgraph s2["stream compute"]
+        I[compute interior cells]
+    end
+    X --> J((join: event))
+    I --> J
+    J --> N[next time step]
+```
+
+*The overlap pattern: the interior update hides the halo exchange.*
 
 ## CUDA Graphs
 

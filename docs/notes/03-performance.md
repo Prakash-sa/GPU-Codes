@@ -15,6 +15,10 @@ regimes:
 | H100 SXM | 34e12 / 3.35e12 ≈ 10 | ≈ 20 |
 | L40S | 1.4e12 / 0.864e12 ≈ 1.6 | ≈ 106 |
 
+![Roofline plots for T4, L40S, RTX PRO 6000, A100, H100](../assets/img/roofline.png)
+
+*Rooflines from the datasheet numbers. Low-intensity kernels (green band) sit on the sloped, bandwidth-limited part of every card.*
+
 - Stencils, LBM, SpMV, and statevector gates have $I \lesssim 1$, so they are
   **memory bound** on every card. Optimize bytes, not FLOPs.
 - Dense GEMM and convolutions have high $I$, so they are compute bound. Use the

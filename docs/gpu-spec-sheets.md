@@ -38,6 +38,10 @@ vendor datasheet peaks (dense, no sparsity).
 
 ## Memory bandwidth
 
+![Bar charts of memory bandwidth and FP64 throughput](assets/img/spec-bars.png)
+
+*Memory bandwidth (left) and FP64 throughput (right) from the datasheets.*
+
 Stencils, LBM steps and statevector updates are all bandwidth-bound, so bandwidth is
 the spec that best predicts their speed.
 

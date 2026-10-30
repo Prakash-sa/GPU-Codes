@@ -10,6 +10,17 @@
 | **PyTorch** | Tensor ops, `torch.compile` | Autograd, ML, quick prototypes |
 | **cuda-python / CUDA C++ + pybind11** | CUDA C++ | Full control, existing C++ kernels |
 
+```mermaid
+flowchart TD
+    A{Porting existing NumPy code?} -->|yes| CP[CuPy]
+    A -->|no| B{Need autograd / ML models?}
+    B -->|yes| PT[PyTorch + torch.compile]
+    B -->|no| C{Custom fused or tiled kernel?}
+    C -->|yes| TR[Triton]
+    C -->|simple per-element loop| NB[Numba CUDA]
+    TR -->|need warp-level control| CU[CUDA C++ via RawKernel / pybind11]
+```
+
 ## CuPy
 
 ```python

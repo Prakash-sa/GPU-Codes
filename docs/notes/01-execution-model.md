@@ -8,6 +8,18 @@
 - Data must be on the device before the kernel reads it, either through explicit
   `cudaMemcpy` or through unified memory.
 
+```mermaid
+sequenceDiagram
+    participant CPU as Host (CPU)
+    participant GPU as Device (GPU)
+    CPU->>GPU: cudaMemcpy host → device (inputs)
+    CPU-)GPU: saxpy<<<blocks, threads>>> (asynchronous)
+    Note over CPU: returns at once, CPU can keep working
+    Note over GPU: thousands of threads run the kernel
+    CPU->>GPU: cudaDeviceSynchronize / cudaMemcpy device → host
+    GPU-->>CPU: results (after the kernel finishes)
+```
+
 ```cpp
 __global__ void saxpy(int n, float a, const float* x, float* y) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;   // global thread index
@@ -21,6 +33,10 @@ cudaDeviceSynchronize();                              // wait + surface errors
 ```
 
 ## The thread hierarchy
+
+![Grid of blocks, block of warps, warp of threads](../assets/img/thread-hierarchy.png)
+
+*A grid is made of blocks; each block is split into warps of 32 threads. The global index combines blockIdx and threadIdx.*
 
 | Level | Built-in | Runs on | Can cooperate via |
 |---|---|---|---|
@@ -45,12 +61,20 @@ cudaDeviceSynchronize();                              // wait + surface errors
   switches to another ready warp with zero cost. GPUs therefore need *many* resident
   warps. That is what occupancy measures.
 
+![Animation: one warp vs four warps hiding memory latency](../assets/img/latency-hiding.gif)
+
+*With one warp the SM idles while the warp waits on memory (25% busy). With four warps the scheduler always has a ready warp, and the SM stays busy.*
+
 ## Warp divergence
 
 ```cpp
 if (threadIdx.x % 2 == 0) a(); else b();   // both paths serialize inside each warp
 if (threadIdx.x / 32 == 0) a(); else b();  // warp-uniform: no divergence
 ```
+
+![Animation: warp divergence on an if/else](../assets/img/warp-divergence.gif)
+
+*Inside one warp, the if and else paths run one after the other with half the lanes masked.*
 
 - When threads in one warp take different branches, the warp runs **both** paths with
   lanes masked off. Make branches uniform per warp where you can.

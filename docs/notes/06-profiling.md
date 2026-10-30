@@ -9,6 +9,16 @@
 | Out-of-bounds, races, uninitialized memory | **compute-sanitizer** |
 | Live utilization, memory, clocks, power | `nvidia-smi`, `nvidia-smi dmon`, DCGM |
 
+```mermaid
+flowchart TD
+    Q{What do you need to know?} -->|Where does the time go?| NS[nsys: timeline]
+    Q -->|Why is this kernel slow?| NC[ncu: kernel metrics]
+    Q -->|Crash or wrong results| CS[compute-sanitizer]
+    Q -->|Is the GPU healthy right now?| SMI[nvidia-smi / DCGM]
+    NS -->|found the hot kernel| NC
+    NC -->|change code, re-measure| NS
+```
+
 Always profile the **system** first, then individual **kernels**.
 
 ## Nsight Systems

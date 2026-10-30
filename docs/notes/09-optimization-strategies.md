@@ -57,6 +57,18 @@ updates). The goal is **fewer bytes**, moved **more efficiently**.
 
 ### Fusion
 
+```mermaid
+flowchart LR
+    subgraph before["Before: 3 kernels → 6 passes over DRAM"]
+        direction LR
+        A1[(f)] -->|read| K1[collide] -->|write| A2[(f)] -->|read| K2[stream] -->|write| A3[(f2)] -->|read| K3[apply BC] -->|write| A4[(f2)]
+    end
+    subgraph after["After: 1 fused kernel → 2 passes"]
+        direction LR
+        B1[(f)] -->|read once| KF[collide + stream + BC<br/>in registers] -->|write once| B2[(f2)]
+    end
+```
+
 ```cpp
 // Before: 3 kernels, each reads and writes the whole field -> 6 passes over memory
 collide<<<g, b>>>(f);  stream<<<g, b>>>(f, f2);  apply_bc<<<g, b>>>(f2);

@@ -20,6 +20,10 @@ memory staging, and tensor-core instructions.
 What you still control: **which tile each program handles**, the memory access
 pattern, the fusion of operations, and the block sizes.
 
+![Animation: Triton program grid over a matrix with masked edge tiles](../assets/img/triton-program-grid.gif)
+
+*Each program owns one 64×64 tile. Tiles on the right and bottom edges extend past the matrix, so the mask turns off the out-of-bounds part (hatched).*
+
 ## Setup
 
 ```bash
@@ -153,6 +157,10 @@ def jacobi(u: torch.Tensor, steps: int) -> torch.Tensor:
   peak bandwidth (see below).
 
 ## Matrix multiply with autotuning
+
+![Animation: one Triton program looping over K in a matmul](../assets/img/triton-matmul.gif)
+
+*Program (1, 2) walks along K, loading one A tile and one B tile per step and accumulating `tl.dot` into its C tile, which it stores once at the end.*
 
 ```python
 @triton.autotune(

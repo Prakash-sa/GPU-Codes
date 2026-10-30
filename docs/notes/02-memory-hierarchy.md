@@ -2,6 +2,10 @@
 
 ## The levels
 
+![GPU memory hierarchy pyramid](../assets/img/memory-hierarchy.png)
+
+*Each level down is larger and slower. Keep hot data as high up as possible.*
+
 | Memory | Scope | Lifetime | Approx. latency | Notes |
 |---|---|---|---|---|
 | Registers | thread | thread | ~1 cycle | 64K × 32-bit per SM; overflow spills to "local" memory |
@@ -25,6 +29,10 @@ float v = a[blockIdx.x * blockDim.x + threadIdx.x];
 // strided: each thread touches a different sector -> up to 32x the traffic
 float w = a[(blockIdx.x * blockDim.x + threadIdx.x) * stride];
 ```
+
+![Animation: coalesced vs strided access](../assets/img/coalescing.gif)
+
+*A coalesced warp touches 4 sectors for 128 useful bytes. A stride of 8 floats touches 32 sectors, which wastes 88% of the bandwidth.*
 
 - Prefer **Structure of Arrays (SoA)** over Array of Structures (AoS). For LBM, store
   `f[q][z][y][x]` with `x` innermost, not `f[z][y][x][q]`.
@@ -50,6 +58,10 @@ __global__ void transpose(const float* in, float* out, int n) {
     out[y * n + x] = tile[threadIdx.x][threadIdx.y];         // coalesced write
 }
 ```
+
+![Shared memory bank conflict patterns](../assets/img/bank-conflicts.png)
+
+*Threads mapped to banks for four access patterns. Padding a 32×32 tile to 32×33 removes the 32-way conflict.*
 
 - 32 **banks**, each 4 bytes wide. When several threads in a warp hit different
   addresses in the same bank, the accesses serialize (a **bank conflict**). All
