@@ -1,0 +1,62 @@
+site_name: GPU Codes
+site_description: Notes on GPU programming and GPU hardware reference sheets
+site_url: https://prakash-sa.github.io/GPU-Codes/
+repo_url: https://github.com/Prakash-sa/GPU-Codes
+repo_name: Prakash-sa/GPU-Codes
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  features:
+    - navigation.instant
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - search.highlight
+    - content.code.copy
+    - content.action.edit
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - footnotes
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - pymdownx.arithmatex:
+      generic: true
+
+extra_javascript:
+  - https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js
+
+nav:
+  - Home: index.md
+  - GPU spec sheets: gpu-spec-sheets.md
+  - GPU programming notes:
+      - Overview: notes/index.md
+      - 1. Execution model: notes/01-execution-model.md
+      - 2. Memory hierarchy: notes/02-memory-hierarchy.md
+      - 3. Performance optimization: notes/03-performance.md
+      - 4. Streams and concurrency: notes/04-streams.md
+      - 5. Multi-GPU and NCCL: notes/05-multi-gpu.md
+      - 6. Profiling and debugging: notes/06-profiling.md
+      - 7. GPU from Python: notes/07-python.md
+      - Cheat sheet: notes/cheatsheet.md
