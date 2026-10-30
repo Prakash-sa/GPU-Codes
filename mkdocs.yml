@@ -40,7 +40,11 @@ markdown_extensions:
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.inlinehilite
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.arithmatex:
       generic: true
 
@@ -61,4 +65,5 @@ nav:
       - 6. Profiling and debugging: notes/06-profiling.md
       - 7. GPU from Python: notes/07-python.md
       - 8. Programming with Triton: notes/08-triton.md
+      - 9. Optimization strategies: notes/09-optimization-strategies.md
       - Cheat sheet: notes/cheatsheet.md

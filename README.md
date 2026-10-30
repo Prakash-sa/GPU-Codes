@@ -18,6 +18,7 @@ GPU stacks) and a GPU hardware reference sheet.
 | [6. Profiling and debugging](docs/notes/06-profiling.md) | Nsight Systems, Nsight Compute, NVTX, compute-sanitizer |
 | [7. GPU from Python](docs/notes/07-python.md) | CuPy, Numba, Triton, PyTorch |
 | [8. Programming with Triton](docs/notes/08-triton.md) | Triton kernels: vector add, fused softmax, stencils, autotuned matmul, debugging |
+| [9. Optimization strategies](docs/notes/09-optimization-strategies.md) | Bottleneck diagnosis and fixes for memory-, latency-, compute- and launch-bound code, multi-GPU |
 | [Cheat sheet](docs/notes/cheatsheet.md) | Quick reference of APIs, limits and formulas |
 
 ## Building locally

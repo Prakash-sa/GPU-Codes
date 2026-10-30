@@ -22,3 +22,4 @@ have run workloads on.
 6. [Profiling and debugging](notes/06-profiling.md)
 7. [GPU from Python](notes/07-python.md)
 8. [Programming with Triton](notes/08-triton.md)
+9. [Optimization strategies](notes/09-optimization-strategies.md)

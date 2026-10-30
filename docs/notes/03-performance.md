@@ -44,6 +44,9 @@ would do.
 
 ## Optimization checklist (in order)
 
+For the full playbook, with diagnosis by symptom and code for each strategy, see
+**[Optimization strategies](09-optimization-strategies.md)**.
+
 1. **Keep data on the device.** Eliminate per-step host↔device copies.
 2. **Coalesce global accesses.** Use SoA layout with the innermost index mapped to
    `threadIdx.x`.
