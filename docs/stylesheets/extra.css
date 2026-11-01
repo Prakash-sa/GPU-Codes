@@ -1,34 +1,15 @@
-/* Site-wide additions: reading progress, read-page marks, and the Before GPU Engineering
-   chapter styles (notes/before-gpu/), mapped onto the Material theme in light and dark. */
+/* The whole site in the style of the Before GPU Engineering notebook: cream graph paper, navy
+   ink, handwritten headings (Patrick Hand), Comic Neue text, Space Mono labels, highlighter
+   marks. Text and code fonts are set in mkdocs.yml; Patrick Hand is loaded here. */
+@import url("https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap");
 
-/* --- reading progress, drawn under the header on every page --- */
-.reading-progress {
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  height: 3px;
-  width: 0;
-  background: var(--md-accent-fg-color);
-  pointer-events: none;
-}
-
-/* --- pages you have opened get a tick in the sidebar --- */
-.md-nav__link.is-read::after {
-  content: "✓";
-  margin-left: 0.4em;
-  color: var(--md-typeset-a-color);
-  opacity: 0.7;
-  font-size: 0.85em;
-}
-
-#bge-continue:empty {
-  display: none;
-}
-
-/* --- Before GPU Engineering chapters --- */
-.md-typeset .bge {
-  --grid-size: 1.6em;
-  --ink-black: var(--md-typeset-color);
+/* --- notebook palette --- */
+:root,
+[data-md-color-scheme="default"] {
+  --paper: #fdfaf0;
+  --paper-raised: #fffdf6;
+  --grid-line: rgba(43, 58, 85, 0.12);
+  --ink-black: #1e293b;
   --ink-navy: #2b3a55;
   --ink-blue: #2563eb;
   --ink-red: #dc2626;
@@ -37,84 +18,429 @@
   --hl-pink: #fecdd3;
   --hl-blue: #bfdbfe;
   --hl-green: #a7f3d0;
+  --hl-ink: #1e293b;
+  --grid-size: 32px;
 }
 
-[data-md-color-scheme="slate"] .md-typeset .bge {
-  --ink-blue: #7aa7ff;
-  --ink-red: #ff7b72;
-  --ink-green: #3fb950;
+/* Night notebook: navy paper, chalk-coloured ink, same highlighters. */
+[data-md-color-scheme="slate"] {
+  --paper: #1b2232;
+  --paper-raised: #222b3d;
+  --grid-line: rgba(200, 214, 240, 0.07);
+  --ink-black: #e7e2d4;
+  --ink-navy: #b9c6de;
+  --ink-blue: #8fb4ff;
+  --ink-red: #ff8a80;
+  --ink-green: #6fdc9f;
 }
 
+[data-md-color-scheme="default"],
+[data-md-color-scheme="slate"] {
+  --md-hue: 222;
+  --md-default-bg-color: var(--paper);
+  --md-default-fg-color: var(--ink-black);
+  --md-default-fg-color--light: color-mix(in srgb, var(--ink-navy) 75%, transparent);
+  --md-default-fg-color--lighter: color-mix(in srgb, var(--ink-navy) 40%, transparent);
+  --md-default-fg-color--lightest: color-mix(in srgb, var(--ink-navy) 12%, transparent);
+  --md-primary-fg-color: var(--paper);
+  --md-primary-fg-color--light: var(--paper);
+  --md-primary-fg-color--dark: var(--paper);
+  --md-primary-bg-color: var(--ink-navy);
+  --md-primary-bg-color--light: color-mix(in srgb, var(--ink-navy) 70%, transparent);
+  --md-accent-fg-color: var(--ink-red);
+  --md-accent-fg-color--transparent: color-mix(in srgb, var(--ink-red) 10%, transparent);
+  --md-typeset-color: var(--ink-black);
+  --md-typeset-a-color: var(--ink-blue);
+  --md-code-bg-color: var(--paper-raised);
+  --md-code-fg-color: var(--ink-black);
+  --md-footer-bg-color: var(--paper);
+  --md-footer-bg-color--dark: var(--paper);
+  --md-footer-fg-color: var(--ink-navy);
+  --md-footer-fg-color--light: color-mix(in srgb, var(--ink-navy) 75%, transparent);
+  --md-footer-fg-color--lighter: color-mix(in srgb, var(--ink-navy) 50%, transparent);
+  --md-typeset-table-color: color-mix(in srgb, var(--ink-navy) 35%, transparent);
+  --md-admonition-bg-color: var(--paper-raised);
+}
+
+body {
+  background: var(--paper);
+}
+
+.md-typeset {
+  font-size: 0.86rem;
+  line-height: 1.75;
+}
+
+/* --- header and tabs: the notebook's title row --- */
+.md-header {
+  border-bottom: 1px solid var(--ink-navy);
+  box-shadow: none !important;
+}
+
+.md-header__topic,
+.md-header__title {
+  font-family: "Space Mono", monospace;
+  letter-spacing: 1px;
+}
+
+.md-header__topic:first-child {
+  font-weight: 700;
+}
+
+.md-tabs {
+  border-bottom: 1px solid var(--ink-navy);
+  font-family: "Space Mono", monospace;
+}
+
+.md-tabs__link {
+  font-size: 0.68rem;
+  text-transform: lowercase;
+  letter-spacing: 0.5px;
+  opacity: 0.85;
+}
+
+.md-tabs__item--active .md-tabs__link {
+  opacity: 1;
+  background: var(--hl-yellow);
+  color: var(--hl-ink);
+  border-radius: 4px;
+  padding: 0 6px;
+  margin-left: -6px;
+  font-weight: 700;
+}
+
+.md-search__form {
+  background: transparent;
+  border: 1px solid var(--ink-navy);
+  border-radius: 4px;
+}
+
+.md-search__input {
+  font-family: "Space Mono", monospace;
+  color: var(--ink-navy);
+}
+
+.md-search__input::placeholder {
+  color: color-mix(in srgb, var(--ink-navy) 70%, transparent);
+}
+
+.md-search__icon,
+.md-header__button {
+  color: var(--ink-navy);
+}
+
+/* --- sidebars: index-card labels --- */
+.md-nav {
+  font-family: "Space Mono", monospace;
+  font-size: 0.66rem;
+}
+
+.md-nav__title,
+.md-nav__item--section > .md-nav__link {
+  font-family: "Patrick Hand", cursive;
+  font-size: 0.95rem;
+  font-weight: normal !important;
+  color: var(--ink-red) !important;
+  text-transform: lowercase;
+}
+
+.md-nav__link--active,
+.md-nav__item .md-nav__link--active {
+  color: var(--hl-ink) !important;
+  background: var(--hl-yellow);
+  border-radius: 3px;
+  padding: 0 4px;
+  margin-left: -4px;
+}
+
+/* --- the page itself: a bordered notebook box on graph paper --- */
+.md-content__inner {
+  margin: 1.2rem 0.4rem 2rem;
+  padding: var(--grid-size) 32px calc(var(--grid-size) * 2);
+  border: 1px solid var(--ink-navy);
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: var(--grid-size) var(--grid-size);
+}
+
+.md-content__inner::before {
+  display: none;
+}
+
+@media screen and (max-width: 44.984375em) {
+  .md-content__inner {
+    margin: 0.6rem 0.4rem 1.2rem;
+    padding: 20px 14px 40px;
+  }
+
+}
+
+/* Headings: handwritten, title on a yellow highlighter stroke, sections in blue ink. */
+.md-typeset h1,
+.md-typeset h2,
+.md-typeset h3,
+.md-typeset h4 {
+  font-family: "Patrick Hand", cursive;
+  font-weight: normal;
+  letter-spacing: 0;
+}
+
+.md-typeset h1 {
+  display: table;
+  margin: 0 auto 0.8em;
+  padding: 0 0.2em;
+  text-align: center;
+  font-size: 2.3em;
+  line-height: 1.3;
+  color: var(--hl-ink);
+  background: var(--hl-yellow);
+  border-radius: 2px;
+}
+
+.md-typeset h2 {
+  font-size: 1.75em;
+  color: var(--ink-blue);
+  margin-top: 1.6em;
+}
+
+.md-typeset h3 {
+  font-size: 1.4em;
+  color: var(--ink-red);
+}
+
+.md-typeset h4 {
+  font-size: 1.2em;
+  color: var(--ink-navy);
+}
+
+.md-typeset h1 .headerlink,
+.md-typeset h2 .headerlink,
+.md-typeset h3 .headerlink {
+  font-family: "Space Mono", monospace;
+  font-size: 0.6em;
+}
+
+.md-typeset strong {
+  color: inherit;
+}
+
+.md-typeset ul li::marker {
+  color: var(--ink-blue);
+}
+
+.md-typeset ol li::marker {
+  color: var(--ink-red);
+  font-family: "Patrick Hand", cursive;
+}
+
+.md-typeset hr {
+  border-bottom: 1px dashed var(--ink-navy);
+}
+
+/* Code: index cards pinned to the page. */
+.md-typeset pre > code,
+.md-typeset .highlight {
+  border-radius: 4px;
+}
+
+.md-typeset .highlight,
+.md-typeset pre {
+  border: 1px solid color-mix(in srgb, var(--ink-navy) 45%, transparent);
+  border-radius: 4px;
+}
+
+.md-typeset :not(pre) > code {
+  background: color-mix(in srgb, var(--ink-navy) 9%, transparent);
+  color: var(--ink-black);
+}
+
+/* Tables: ruled in navy ink. */
+.md-typeset table:not([class]) {
+  background: var(--paper-raised);
+  border: 1px solid var(--ink-navy);
+  border-radius: 4px;
+  font-size: 0.78rem;
+}
+
+/* Some tables have an empty header row (key/value tables): hide it. */
+.md-typeset table:not([class]) thead:not(:has(th:not(:empty))) {
+  display: none;
+}
+
+.md-typeset table:not([class]) th {
+  font-family: "Space Mono", monospace;
+  font-size: 0.72rem;
+  color: var(--ink-navy);
+  background: color-mix(in srgb, var(--hl-blue) 45%, transparent);
+  border-bottom: 1px solid var(--ink-navy);
+}
+
+/* Admonitions: the notebook's callout boxes. */
+.md-typeset .admonition,
+.md-typeset details {
+  background: var(--paper-raised);
+  border: 2px solid var(--ink-blue);
+  border-radius: 8px;
+  box-shadow: none;
+  font-size: 0.8rem;
+}
+
+.md-typeset .admonition-title,
+.md-typeset summary {
+  font-family: "Patrick Hand", cursive;
+  font-size: 1.1em;
+  font-weight: normal !important;
+  background: transparent !important;
+}
+
+.md-typeset :is(.admonition, details) > :is(.admonition-title, summary)::before {
+  background-color: var(--ink-blue);
+}
+
+.md-typeset :is(.admonition, details):is(.warning, .danger, .failure, .bug, .caution, .error) {
+  border-color: var(--ink-red);
+}
+
+.md-typeset :is(.admonition, details):is(.warning, .danger, .failure, .bug, .caution, .error)
+  > :is(.admonition-title, summary)::before {
+  background-color: var(--ink-red);
+}
+
+.md-typeset :is(.admonition, details):is(.tip, .hint, .success, .question, .help, .faq) {
+  border-color: var(--ink-green);
+}
+
+.md-typeset :is(.admonition, details):is(.tip, .hint, .success, .question, .help, .faq)
+  > :is(.admonition-title, summary)::before {
+  background-color: var(--ink-green);
+}
+
+/* Figures (matplotlib PNGs) sit on paper cards so they read in both schemes. */
+.md-typeset img {
+  border-radius: 4px;
+}
+
+[data-md-color-scheme="slate"] .md-typeset img {
+  background: #fdfaf0;
+  padding: 4px;
+}
+
+.md-footer,
+.md-footer-meta {
+  border-top: 1px solid var(--ink-navy);
+  background: var(--paper) !important;
+}
+
+.md-footer__title,
+.md-footer__direction {
+  font-family: "Space Mono", monospace;
+}
+
+/* --- reading progress, drawn in red ink under the header on every page --- */
+.reading-progress {
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  height: 3px;
+  width: 0;
+  background: var(--ink-red);
+  pointer-events: none;
+}
+
+/* --- pages you have opened get a green tick in the sidebar --- */
+.md-nav__link.is-read::after {
+  content: "✓";
+  margin-left: 0.4em;
+  color: var(--ink-green);
+  font-weight: bold;
+}
+
+#bge-continue:empty {
+  display: none;
+}
+
+#bge-continue p {
+  font-family: "Space Mono", monospace;
+  font-size: 0.75rem;
+}
+
+/* --- highlighters, ink colours and notebook marks (used by the Before GPU chapters) --- */
 .md-typeset .hl-yellow,
 .md-typeset .hl-pink,
 .md-typeset .hl-blue,
 .md-typeset .hl-green {
   border-radius: 2px;
-  padding: 0 0.15em;
-  color: #1e293b;            /* pastel highlighter: keep dark ink on it in both schemes */
+  color: var(--hl-ink);
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
 }
 
-.md-typeset .hl-yellow { background-color: #fef08a; }
-.md-typeset .hl-pink { background-color: #fecdd3; }
-.md-typeset .hl-blue { background-color: #bfdbfe; }
-.md-typeset .hl-green { background-color: #a7f3d0; }
+.md-typeset .hl-yellow { background-color: var(--hl-yellow); }
+.md-typeset .hl-pink { background-color: var(--hl-pink); }
+.md-typeset .hl-blue { background-color: var(--hl-blue); }
+.md-typeset .hl-green { background-color: var(--hl-green); }
 
-.md-typeset .bge h1 {
-  margin-bottom: 0.4em;
+/* A chapter's own <h1> already carries a highlighter span. */
+.md-typeset h1:has(> .hl-yellow) {
+  background: none;
 }
+
+.md-typeset h2 > [class^="hl-"] {
+  color: var(--hl-ink);
+}
+
+.md-typeset .text-blue { color: var(--ink-blue); }
+.md-typeset .text-red { color: var(--ink-red); }
+.md-typeset .text-green { color: var(--ink-green); }
+.md-typeset .bold { font-weight: 700; }
 
 .md-typeset .bge-meta {
   margin-top: 0;
-  color: var(--md-default-fg-color--light);
-  font-size: 0.85em;
+  text-align: center;
+  font-family: "Space Mono", monospace;
+  font-size: 0.68rem;
+  color: var(--ink-navy);
 }
-
-.md-typeset .bge .text-blue { color: var(--ink-blue); }
-.md-typeset .bge .text-red { color: var(--ink-red); }
-.md-typeset .bge .text-green { color: var(--ink-green); }
-.md-typeset .bge .bold { font-weight: 700; }
 
 .md-typeset .bge .arrow {
   color: var(--ink-red);
+  font-family: "Patrick Hand", cursive;
   font-weight: bold;
-  margin-right: 0.4em;
+  margin-right: 8px;
 }
 
 .md-typeset .bge .annotation {
   display: block;
   color: var(--ink-red);
-  font-style: italic;
+  font-family: "Patrick Hand", cursive;
+  font-size: 1.15em;
+  text-align: center;
   margin-bottom: 1em;
 }
 
 .md-typeset .bge .formula-text {
-  font-size: 1.25em;
-  font-weight: 600;
+  font-family: "Patrick Hand", cursive;
+  font-size: 1.45em;
   text-align: center;
 }
 
 .md-typeset .bge .handwritten-highlight {
-  font-size: 1.15em;
+  font-family: "Patrick Hand", cursive;
+  font-size: 1.45em;
   font-weight: bold;
 }
 
 .md-typeset .bge .callout-box {
-  border: 2px solid var(--ink-blue);
+  box-shadow: inset 0 0 0 2px var(--ink-blue);
   border-radius: 8px;
-  padding: 0.8em 1.2em;
+  padding: 1em 1.6em;
   margin-bottom: 1em;
 }
 
 .md-typeset .bge .callout-box.red-ink {
-  border-color: var(--ink-red);
-}
-
-/* Upstream sets a handwriting font inline on takeaway boxes; use the site font instead.
-   The SVG diagrams keep their own (they load it themselves). */
-.md-typeset .bge [style*="Patrick Hand"]:not(svg) {
-  font-family: inherit !important;
+  box-shadow: inset 0 0 0 2px var(--ink-red);
 }
 
 .md-typeset .bge svg {
@@ -127,4 +453,13 @@
   background: #faf6ec;
   border-radius: 8px;
   padding: 4px;
+}
+
+/* Phones: the title as a plain highlighted block, clear of the edit icon. */
+@media screen and (max-width: 44.984375em) {
+  .md-typeset h1 {
+    display: block;
+    margin: 0 1.6em 0.8em 0;
+    font-size: 1.8em;
+  }
 }
