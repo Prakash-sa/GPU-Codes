@@ -1,0 +1,243 @@
+---
+title: "4. Why GPUs care so much about memory bandwidth"
+---
+
+<div class="bge">
+<!-- Title -->
+<h1><span class="hl-yellow">Why GPUs care so much about memory bandwidth</span></h1>
+<p class="bge-meta">Phase 1 · Part 2: Feeding the Beast · Chapter 4 of 56 · notebook date 18 / jun / 26</p>
+<span class="annotation">*worked out from first principles*</span>
+
+<!-- Introduction -->
+<p>
+  A GPU core does math blindingly fast. Billions of operations a second. But most of the time it isn't doing math at all. It is sitting <strong class="hl-yellow">idle</strong>, waiting for data to show up. That one fact, more than core count, more than FLOPS, decides how fast a chip actually runs.
+</p>
+
+<p>
+  It is easy to say thousands of cores run at once. But they don't, not really, not unless something keeps feeding them. That something is <strong class="hl-green">bandwidth</strong>.
+</p>
+
+<p class="text-blue">
+  <span class="arrow">↳</span> So the real story isn't the cores. It's what feeds them. Let's build it from the bottom.
+</p>
+
+<!-- Section 1 -->
+</div>
+
+## <span class="hl-blue">First, why does a core starve?</span>
+
+<div class="bge">
+<p>
+  It's a speed gap, and the numbers are brutal. A GPU core finishes one piece of math in roughly <span class="text-blue bold">1 unit of time</span>, but fetching fresh data from main memory takes closer to <span class="text-red bold">100 or 200 units</span>. The data lives on the far side of the chip, and getting it across takes forever in core-time. So the worker finishes, looks up, and there is nothing in his hands. He sits. That gap between a fast core and slow memory has a name: <strong class="hl-yellow">the memory wall</strong>.
+</p>
+
+<p>
+  And this isn't bad engineering, it's physics. Inside the chip, data travels through microscopic wires. The math inside a core happens at basically the speed of electricity, but pushing data through those thin wires has a <strong class="hl-pink">hard physical ceiling</strong>. Only so much can flow through at once, and you can't just wish more through. That is the wall, and it is built into the silicon.
+</p>
+
+<!-- Section 2 -->
+</div>
+
+## <span class="hl-pink">Scaling it up</span>
+
+<div class="bge">
+<p>
+  Now multiply that by scale. A CPU has a few cores, so its modest appetite is easy to feed. A GPU has thousands of cores, all screaming for data at the exact same instant, all shouting <span class="text-blue bold">"give me numbers, give me numbers."</span>
+</p>
+
+<p>
+  If the pipe feeding them is narrow, a handful get fed and the other thousands starve. The more cores you add, the worse the starvation gets unless the pipe grows with them. Raw core count without bandwidth is just a <strong class="hl-yellow">factory full of idle workers</strong>.
+</p>
+
+<!-- Section 3 -->
+</div>
+
+## <span class="hl-yellow">So what's the fix? You widen the road.</span>
+
+<div class="bge">
+<p>
+  Ordinary RAM feeds data through a narrow pipe, which is fine for a CPU but useless for thousands of hungry cores. So GPUs use special memory built for width, specifically <strong class="hl-blue">HBM</strong> or <strong class="hl-pink">GDDR</strong>.
+</p>
+
+<p class="text-blue">
+  <span class="arrow">↳</span> Think of it as swapping a garden hose for a <strong class="hl-green">firehose</strong>. Now data arrives in a flood, the workers always have something in their hands, and they actually feast instead of starve.
+</p>
+
+<p>
+  That flood of supply is what bandwidth really means: not how fast one delivery is, but how much total data arrives per second.
+</p>
+
+<!-- Section 4 -->
+</div>
+
+## <span class="hl-blue">The second trick: Latency Hiding</span>
+
+<div class="bge">
+<p>
+  There is a clever second trick stacked on top: <strong class="hl-yellow">latency hiding</strong>.
+</p>
+
+<p>
+  Fetching a specific piece of data still takes a long time. But a GPU core doesn't fold its arms and wait for it. The moment its data is delayed, it <strong class="hl-yellow">grabs a different ready piece of work</strong> and starts on that instead. By the time the slow data finally lands, the core has already done useful work on something else, meaning the delay got <strong class="hl-green">hidden behind other work</strong>.
+</p>
+
+<p class="text-red">
+  <span class="arrow">↳</span> The catch is that this only works if the wide pipe keeps a steady flood of fresh work arriving. Starve the pipe and there is nothing to switch to, and latency hiding dies.
+</p>
+
+<!-- Section 5 -->
+</div>
+
+## <span class="hl-pink">Which chip do you actually need?</span>
+
+<div class="bge">
+<p>
+  Every workload is bottlenecked by one of two things, and they want opposite hardware:
+</p>
+
+<ol>
+  <li><span class="text-blue bold">Memory-bound:</span> The math is easy but the data is enormous. Imagine <strong class="hl-blue">copying a massive database</strong> of user profiles. There is no calculation, just endless hauling of files from memory to the processor. Here, faster compute cores buy you nothing because the math unit was never the problem. The connection road was. You need more bandwidth. Throwing FLOPS at this is wasted money.</li>
+  <li><span class="text-red bold">Compute-bound:</span> The data is tiny but the math is brutal. Imagine <strong class="hl-pink">decrypting a password</strong>. The input is just a single 8-character string, but you have to run it through millions of complex mathematical equations. Here, widening the memory highway does nothing because there is barely any data to move. You need faster processors and more raw compute. Throwing bandwidth at this is wasted money.</li>
+</ol>
+
+<p>
+  This is why "which GPU is best" has no single answer. A job hauling oceans of data wants <strong class="hl-yellow">HBM-class bandwidth</strong>. A job grinding heavy math on little data wants <strong class="hl-green">raw compute power</strong>. You match the hardware to the bottleneck, not to the spec sheet.
+</p>
+
+<!-- Hand-drawn Memory Routing Diagram -->
+<div style="margin: calc(var(--grid-size) * 1.5) 0; position: relative; width: 100%;">
+  <svg viewBox="0 0 600 260" width="100%" height="auto" style="display: block; font-family: 'Patrick Hand', cursive; overflow: visible;">
+    <defs>
+      <filter id="handdrawn" filterUnits="userSpaceOnUse" x="0" y="0" width="600" height="260">
+        <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" result="noise" />
+        <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.2" xChannelSelector="R" yChannelSelector="G" />
+      </filter>
+    </defs>
+    
+    <!-- GDDR Setup (Left) -->
+    <!-- PCB Board base line (Sketched Double Line) -->
+    <path d="M 70,200 L 250,200 L 250,210 L 70,210 Z" fill="none" stroke="var(--ink-navy)" stroke-width="2.5" stroke-linecap="round" filter="url(#handdrawn)" />
+    <path d="M 71,199 L 249,199 L 249,209 L 71,209 Z" fill="none" stroke="var(--ink-blue)" stroke-width="1" opacity="0.4" stroke-linecap="round" filter="url(#handdrawn)" />
+    
+    <!-- GPU Die -->
+    <path d="M 80,150 L 140,150 L 140,195 L 80,195 Z" fill="var(--hl-yellow)" opacity="0.45" stroke="var(--ink-navy)" stroke-width="1.5" filter="url(#handdrawn)" />
+    
+    <!-- GDDR Chip -->
+    <path d="M 180,150 L 240,150 L 240,195 L 180,195 Z" fill="var(--hl-blue)" opacity="0.45" stroke="var(--ink-navy)" stroke-width="1.5" filter="url(#handdrawn)" />
+    
+    <!-- Thin Board Traces -->
+    <line x1="140" y1="165" x2="180" y2="165" stroke="var(--ink-navy)" stroke-width="1.2" filter="url(#handdrawn)" />
+    <line x1="140" y1="180" x2="180" y2="180" stroke="var(--ink-navy)" stroke-width="1.2" filter="url(#handdrawn)" />
+    
+    <!-- Data Flow Arrow (GDDR) -->
+    <path d="M 160,172 L 150,172" fill="none" stroke="var(--ink-red)" stroke-width="1" filter="url(#handdrawn)" />
+    <path d="M 152,169 L 146,172 L 152,175 Z" fill="var(--ink-red)" filter="url(#handdrawn)" />
+    
+    
+    <!-- HBM Setup (Right) -->
+    <!-- Silicon Interposer (Sketched Double Line) -->
+    <path d="M 350,200 L 530,200 L 530,210 L 350,210 Z" fill="none" stroke="var(--ink-navy)" stroke-width="2.5" stroke-linecap="round" filter="url(#handdrawn)" />
+    <path d="M 351,199 L 529,199 L 529,209 L 351,209 Z" fill="none" stroke="var(--ink-blue)" stroke-width="1" opacity="0.4" stroke-linecap="round" filter="url(#handdrawn)" />
+    
+    <!-- GPU Die -->
+    <path d="M 360,140 L 420,140 L 420,195 L 360,195 Z" fill="var(--hl-yellow)" opacity="0.45" stroke="var(--ink-navy)" stroke-width="1.5" filter="url(#handdrawn)" />
+    
+    <!-- HBM Stack (4 Stacked Dies) -->
+    <path d="M 450,170 L 520,170 L 520,195 L 450,195 Z" fill="var(--hl-pink)" opacity="0.45" stroke="var(--ink-navy)" stroke-width="1.5" filter="url(#handdrawn)" />
+    <path d="M 450,145 L 520,145 L 520,170 L 450,170 Z" fill="var(--hl-pink)" opacity="0.45" stroke="var(--ink-navy)" stroke-width="1.5" filter="url(#handdrawn)" />
+    <path d="M 450,120 L 520,120 L 520,145 L 450,145 Z" fill="var(--hl-pink)" opacity="0.45" stroke="var(--ink-navy)" stroke-width="1.5" filter="url(#handdrawn)" />
+    <path d="M 450,95 L 520,95 L 520,120 L 450,120 Z" fill="var(--hl-pink)" opacity="0.45" stroke="var(--ink-navy)" stroke-width="1.5" filter="url(#handdrawn)" />
+    
+    <!-- TSV vertical wires running through dies -->
+    <line x1="485" y1="95" x2="485" y2="195" stroke="var(--ink-navy)" stroke-width="1.2" stroke-dasharray="2,2" filter="url(#handdrawn)" />
+    
+    <!-- Thick horizontal interposer bus wires -->
+    <line x1="420" y1="179" x2="450" y2="179" stroke="var(--ink-navy)" stroke-width="1" filter="url(#handdrawn)" />
+    <line x1="420" y1="182" x2="450" y2="182" stroke="var(--ink-navy)" stroke-width="1" filter="url(#handdrawn)" />
+    <line x1="420" y1="185" x2="450" y2="185" stroke="var(--ink-navy)" stroke-width="1" filter="url(#handdrawn)" />
+    <line x1="420" y1="188" x2="450" y2="188" stroke="var(--ink-navy)" stroke-width="1" filter="url(#handdrawn)" />
+    <line x1="420" y1="191" x2="450" y2="191" stroke="var(--ink-navy)" stroke-width="1" filter="url(#handdrawn)" />
+    <line x1="420" y1="194" x2="450" y2="194" stroke="var(--ink-navy)" stroke-width="1" filter="url(#handdrawn)" />
+    
+    <!-- Massive Bandwidth Arrow (HBM) -->
+    <path d="M 442,160 L 428,160" fill="none" stroke="var(--ink-red)" stroke-width="1.5" filter="url(#handdrawn)" />
+    <path d="M 430,157 L 424,160 L 430,163 Z" fill="var(--ink-red)" filter="url(#handdrawn)" />
+    
+    
+    <!-- Text Labels (crisp, no filter) -->
+    <text x="160" y="28" fill="var(--ink-navy)" font-size="15" font-weight="bold" text-anchor="middle">GDDR SETUP</text>
+    <text x="160" y="125" fill="var(--ink-navy)" font-size="11" text-anchor="middle">narrow connection road</text>
+    <text x="160" y="140" fill="var(--ink-black)" font-size="11" font-style="italic" text-anchor="middle">thin PCB traces</text>
+    <text x="110" y="177" fill="var(--ink-black)" font-size="13" font-weight="bold" text-anchor="middle">GPU</text>
+    <text x="210" y="177" fill="var(--ink-black)" font-size="13" font-weight="bold" text-anchor="middle">GDDR</text>
+    <text x="160" y="228" fill="var(--ink-navy)" font-size="12" text-anchor="middle">PCB Motherboard</text>
+    
+    <text x="440" y="28" fill="var(--ink-navy)" font-size="15" font-weight="bold" text-anchor="middle">HBM SETUP</text>
+    <text x="440" y="60" fill="var(--ink-navy)" font-size="11" font-weight="bold" text-anchor="middle">ultra-wide bus (1024+ lines)</text>
+    <text x="485" y="82" fill="var(--ink-black)" font-size="11" font-style="italic" text-anchor="middle">HBM Stack</text>
+    <text x="491" y="142" fill="var(--ink-navy)" font-size="9" font-style="italic">TSVs</text>
+    <text x="390" y="172" fill="var(--ink-black)" font-size="13" font-weight="bold" text-anchor="middle">GPU</text>
+    <text x="440" y="228" fill="var(--ink-navy)" font-size="12" text-anchor="middle">Silicon Interposer</text>
+  </svg>
+  <span class="annotation" style="margin-top: 8px; display: block; font-size: 13px;">*gddr: separate memory chips on a board with narrow bus traces. hbm: vertically stacked memory dies connected by a huge highway.*</span>
+</div>
+
+<!-- Section 6 -->
+</div>
+
+## <span class="hl-yellow">GDDR vs. HBM: Speed vs. Width</span>
+
+<div class="bge">
+<p>
+  Which brings up the next question: GPUs use HBM or GDDR, so what is the actual difference? They are both the GPU's memory, but they bet on opposite things. One bets on speed, the other on width.
+</p>
+
+<p>
+  <strong>GDDR is the <span class="hl-blue" style="padding: 0 4px;">fast lone delivery boy</span>.</strong> It sits as separate little chips on the board around the main GPU, and it rides a relatively narrow road. But it cycles that road at a very high frequency. It is cheap, widely available, and perfect for gaming, where the data isn't huge but it needs to arrive quickly. One fast rider on a thin street.
+</p>
+
+<p>
+  <strong>HBM is the <span class="hl-pink" style="padding: 0 4px;">massive cargo train</span>.</strong> Instead of scattering chips around the board, HBM stacks them vertically, one on top of another like a tower, and parks that tower right next to the GPU core. It runs on an absurdly wide road, thousands of microscopic wires moving data side by side. Any single lane may be slower than GDDR, but the road is so wide it dumps an entire truckload in one pass.
+</p>
+
+<p class="text-blue">
+  <span class="arrow">↳</span> That is why every serious AI chip (like the H100s and A100s training large models) uses HBM. LLMs need <strong class="hl-yellow">oceans of data moved in bulk</strong> with no traffic jam, and width is the only thing that delivers that.
+</p>
+
+<p>
+  The cost is that HBM is expensive and hard to manufacture, which is exactly why it lives in data centers and not your gaming PC.
+</p>
+
+<div style="margin-bottom: var(--grid-size); text-align: center;">
+  <p class="handwritten-highlight text-blue" style="margin-bottom: 0; text-align: center;">
+    ↳ The cleanest way to feel the difference:
+  </p>
+  <p class="hl-yellow" style="font-family: 'Space Mono', monospace; font-size: 15px; display: inline-block; padding: 0 10px; margin-top: 0; margin-bottom: 0; line-height: var(--grid-size); height: var(--grid-size); border-radius: 4px; letter-spacing: normal;">
+    GDDR = thin pipe at insane pressure. HBM = giant slow firehose.
+  </p>
+</div>
+
+<!-- Takeaway -->
+<div style="margin-top: calc(var(--grid-size) * 2); margin-bottom: var(--grid-size); border-left: 3px solid var(--ink-red); padding-left: 20px;">
+  <h2 class="text-red" style="font-family: 'Patrick Hand', cursive; font-size: 32px; margin-bottom: var(--grid-size);">
+    ↳ The General Takeaway
+  </h2>
+
+  <p>
+    Cores don't make a GPU fast: fed cores do. A GPU core spends most of its life waiting on the memory wall, and the only thing that saves it is a road wide enough to keep the flood coming.
+  </p>
+
+  <p>
+    Before you ever count cores or FLOPS, ask what the work is actually starving for. Drowning in data with simple math wants bandwidth. Tiny data with brutal math wants compute.
+  </p>
+
+  <p class="handwritten-highlight text-red" style="text-align: center; margin-top: var(--grid-size);">
+    The hardware was never the point... <br>
+    <span class="hl-yellow" style="font-family: inherit; font-size: inherit;">the bottleneck always was.</span>
+  </p>
+</div>
+</div>
+
+---
+
+<small>From [Before GPU Engineering](https://github.com/BEFORE-GPU-ENGINEERING/BEFORE-GPU-ENGINEERING) by Ranjan Yadav, used under the [MIT license](../LICENSE.txt).</small>

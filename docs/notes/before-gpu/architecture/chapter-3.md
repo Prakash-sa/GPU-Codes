@@ -1,0 +1,184 @@
+---
+title: "3. What \"parallelizable\" actually means"
+---
+
+<div class="bge">
+<!-- Title -->
+<h1><span class="hl-yellow">What "parallelizable" actually means</span></h1>
+<p class="bge-meta">Phase 1 · Part 1: The Architecture · Chapter 3 of 56 · notebook date 17 / jun / 26</p>
+<span class="annotation">*worked out from first principles*</span>
+
+<!-- Introduction -->
+<p>
+  Last two chapters, we broke down why a CPU can't have 10,000 cores, and why a GPU crushes matrix math. This is the missing piece underneath both: when does throwing more cores at a problem actually help? 
+</p>
+
+<p>
+  Because the honest answer is: usually, it doesn't.
+</p>
+
+<p>
+  Here's the belief almost everyone walks around with: <em>"I have 10,000 cores, so any job gets 10,000 times faster."</em> It's a comforting idea, and it's mostly wrong. More cores only help if the work can be <strong class="hl-green">cut into pieces that don't need each other</strong>. The second one piece needs another piece's answer first, all those extra cores go quiet.
+</p>
+
+<p class="text-blue">
+  <span class="arrow">↳</span> The enemy of parallelism has a name: <strong class="hl-yellow">dependency</strong>. If step B needs the output of step A before it can even start, there is nothing to parallelize. Step B simply has to wait. No chip, no budget, no number of cores fixes that. It's baked into the shape of the problem.
+</p>
+
+<!-- Section 1 -->
+</div>
+
+## <span class="hl-blue">Three shapes of work</span>
+
+<div class="bge">
+<p>
+  The right question is never "how many cores do I have?" It's: <strong>"Do the pieces of this work depend on each other?"</strong> 
+</p>
+
+<p>
+  Let's look at the same hardware across three tasks that sit at completely different points on the dependency scale.
+</p>
+</div>
+
+## <span class="hl-green">1. Matrix multiplication: perfectly parallel</span>
+
+<div class="bge">
+<p>
+  Every cell of the output has its own formula and reads only the original inputs. The cell at row 1, column 1 does not care what the cell at row 5, column 2 is doing. There is <strong class="hl-yellow">no sharing of results, no order, and no waiting</strong>. 
+</p>
+<p>
+  A GPU looks at this, sees that everything is independent, shatters the task into millions of pieces, and hands each to its own tiny core. They all run at once. The cores never have to talk to each other. <strong class="hl-green">Zero communication</strong>. This is the dream case: and it's exactly why AI, which is mostly matrix math, lives on GPUs.
+</p>
+</div>
+
+## <span class="hl-yellow">2. Sorting: half parallel, then a wall</span>
+
+<div class="bge">
+<p>
+  Take merge sort. The start is genuinely parallel. You have 10,000 numbers, you split them into four chunks, you hand each chunk to its own core, and all four sort their piece at the same time. Great, free speedup.
+</p>
+<p>
+  But then comes the merge. To fuse those four sorted chunks into one final sorted list, the cores have to compare elements across the chunks. This means they have to look at each other's data and coordinate. That final merge cannot be done by everyone at once. Cores slow down, they wait, they take turns. Sorting <strong class="hl-pink">starts as a sprint and ends in a traffic jam</strong>: partly parallel, partly serial, and the serial tail caps how fast it can ever go.
+</p>
+</div>
+
+## <span class="hl-pink">3. Linked-list traversal: strictly serial, no escape</span>
+
+<div class="bge">
+<p>
+  A linked list is a treasure hunt. Each block holds its own data plus the address of the next block, and nothing else. You do not know where item 2 lives until you have read item 1. You cannot reach item 5 without walking through 1, 2, 3, and 4 first. There is no shortcut, and no way to guess ahead.
+</p>
+<p>
+  Here, you can own 10,000 cores and exactly one of them will ever do work. The other 9,999 sit there swatting flies, because not one of them knows where to go next until the one working core tells them. Some problems are <strong class="hl-blue">serial in their soul</strong>, and no hardware on earth can parallelize them.
+</p>
+
+<p class="text-blue">
+  <span class="arrow">↳</span> <strong>So the three shapes line up like this:</strong>
+</p>
+<ul>
+  <li><strong class="text-green">Matrix math:</strong> fully independent, runs everywhere at once.</li>
+  <li><strong class="text-blue">Sorting:</strong> independent at first, then forced to coordinate.</li>
+  <li><strong class="text-red">Linked list:</strong> every step chained to the one before it.</li>
+</ul>
+<p>
+  Same machine, three completely different ceilings. And the only thing that changed was how much the pieces depend on each other.
+</p>
+
+<!-- Hand-drawn Amdahl's Law Timeline Diagram -->
+<div style="margin: calc(var(--grid-size) * 1.5) 0; position: relative; width: 100%;">
+  <svg viewBox="0 0 600 270" width="100%" height="auto" style="display: block; font-family: 'Patrick Hand', cursive; overflow: visible;">
+    <defs>
+      <filter id="handdrawn" filterUnits="userSpaceOnUse" x="0" y="0" width="600" height="270">
+        <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" result="noise" />
+        <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.2" xChannelSelector="R" yChannelSelector="G" />
+      </filter>
+    </defs>
+    
+    <!-- Timeline 1: Single Core (Serial) -->
+    <!-- Box Outline (Sketched Double Path) -->
+    <path d="M 120,45 L 520,45 L 520,75 L 120,75 Z" fill="none" stroke="var(--ink-navy)" stroke-width="2.5" stroke-linecap="round" filter="url(#handdrawn)" />
+    <path d="M 121,44 L 519,44 L 519,74 L 121,74 Z" fill="none" stroke="var(--ink-blue)" stroke-width="1.2" opacity="0.5" stroke-linecap="round" filter="url(#handdrawn)" />
+    
+    <!-- Highlights inside Timeline 1 -->
+    <!-- Serial Part (30% = 120px) -->
+    <path d="M 120,45 L 240,45 L 240,75 L 120,75 Z" fill="var(--hl-pink)" opacity="0.45" filter="url(#handdrawn)" />
+    <!-- Parallelizable Part (70% = 280px) -->
+    <path d="M 240,45 L 520,45 L 520,75 L 240,75 Z" fill="var(--hl-blue)" opacity="0.45" filter="url(#handdrawn)" />
+    
+    <!-- Timeline 2: Multi-Core / GPU -->
+    <!-- Box Outline (Sketched Double Path) -->
+    <path d="M 120,140 L 260,140 L 260,170 L 120,170 Z" fill="none" stroke="var(--ink-navy)" stroke-width="2.5" stroke-linecap="round" filter="url(#handdrawn)" />
+    <path d="M 121,139 L 259,139 L 259,169 L 121,169 Z" fill="none" stroke="var(--ink-blue)" stroke-width="1.2" opacity="0.5" stroke-linecap="round" filter="url(#handdrawn)" />
+    
+    <!-- Highlights inside Timeline 2 -->
+    <!-- Serial Part (Unchanged at 120px) -->
+    <path d="M 120,140 L 240,140 L 240,170 L 120,170 Z" fill="var(--hl-pink)" opacity="0.45" filter="url(#handdrawn)" />
+    <!-- Parallel Part (Shrunk to 20px) -->
+    <path d="M 240,140 L 260,140 L 260,170 L 240,170 Z" fill="var(--hl-blue)" opacity="0.45" filter="url(#handdrawn)" />
+    
+    <!-- Vertical Alignment/Boundary Line -->
+    <line x1="240" y1="35" x2="240" y2="180" stroke="var(--ink-navy)" stroke-width="1.2" stroke-dasharray="3,3" opacity="0.4" filter="url(#handdrawn)" />
+    
+    <!-- Horizontal Arrow pointing left from "shrunk!" label into the blue segment -->
+    <path d="M 273,155 L 264,155" fill="none" stroke="var(--ink-blue)" stroke-width="1.2" filter="url(#handdrawn)" />
+    <path d="M 266,152 L 261,155 L 266,158 Z" fill="var(--ink-blue)" filter="url(#handdrawn)" />
+    
+    <!-- Labels (crisp, no filter) -->
+    <text x="120" y="35" fill="var(--ink-navy)" font-size="14" font-weight="bold">Single Core (Serial Execution)</text>
+    <text x="180" y="64" fill="var(--ink-black)" font-size="11" font-weight="bold" text-anchor="middle">Serial (30%)</text>
+    <text x="380" y="64" fill="var(--ink-black)" font-size="12" font-weight="bold" text-anchor="middle">Parallelizable Part (70%)</text>
+    
+    <text x="120" y="130" fill="var(--ink-navy)" font-size="14" font-weight="bold">Multi-Core / GPU (Parallelized)</text>
+    <text x="180" y="159" fill="var(--ink-black)" font-size="11" font-weight="bold" text-anchor="middle">Serial Part (unchanged)</text>
+    <text x="278" y="159" fill="var(--ink-blue)" font-size="12" font-weight="bold">shrunk!</text>
+    
+    <!-- Amdahl's Law Explanatory Caption -->
+    <text x="300" y="215" fill="var(--ink-red)" font-size="14" font-weight="bold" text-anchor="middle">Amdahl's Law: The serial portion (pink) limits the maximum possible speedup.</text>
+    <text x="300" y="238" fill="var(--ink-red)" font-size="12" text-anchor="middle" font-style="italic">*no matter how many cores are added, the serial part (30% time) cannot be split, setting a hard ceiling.*</text>
+  </svg>
+</div>
+
+<!-- Section 2 -->
+</div>
+
+## <span class="hl-pink">Cross-question: Is every algorithm parallelizable if you just try hard enough?</span>
+
+<div class="bge">
+<p>
+  No. It's worth seeing why some problems are permanently serial:
+</p>
+
+<ol>
+  <li><strong>Inherent serial nature:</strong> Take Fibonacci numbers (0, 1, 1, 2, 3, 5, 8). The rule is literally <code>F(n) = F(n-1) + F(n-2)</code>. You cannot compute 8 until you already have 3 and 5. The definition itself <strong class="hl-yellow">forces an order</strong>. No clever scheduling escapes a problem that is defined in terms of its own previous answers.</li>
+  
+  <li><strong>Data dependency:</strong> If every step's input is the previous step's output, the steps form a chain by construction. Step 2 cannot begin until step 1 has handed it something. Parallelism here isn't just slow: it's <strong class="hl-pink">impossible</strong>.</li>
+  
+  <li><strong>The baby rule:</strong> This is the most honest line in all of computer science: <strong class="hl-green">nine women cannot make a baby in one month</strong>. Some things take linear time because of physical or logical limits, and dividing the work among more workers does nothing. Adding people to a late project, or cores to a serial task, just adds coordination confusion.</li>
+  
+  <li><strong>Communication can cost more than the work:</strong> This is the trap. If you force a stubborn serial algorithm onto thousands of cores anyway, the cores spend more time shouting at each other (asking <em>"did you finish? what's your answer? wait for me"</em>) than they would have spent just doing the math on one core. The <span class="text-red bold">coordination overhead grows faster</span> than the speedup, and the whole thing gets slower than where you started. More cores actively made it worse.</li>
+</ol>
+
+<!-- Conclusion -->
+<div style="margin-top: calc(var(--grid-size) * 2); margin-bottom: var(--grid-size); border-left: 3px solid var(--ink-red); padding-left: 20px;">
+  <h2 class="text-red" style="font-family: 'Patrick Hand', cursive; font-size: 32px; margin-bottom: var(--grid-size);">
+    ↳ The General Takeaway
+  </h2>
+
+  <p>
+    Don't count cores: read the dependencies. 
+  </p>
+
+  <p>
+    If the pieces of the work are independent of each other, send it to a GPU and watch thousands of cores eat it alive, like matrix math. If each piece depends on the last, forget the core count entirely and put it on a single fast CPU core, like a linked list. 
+  </p>
+
+  <p class="handwritten-highlight text-red" style="text-align: center; margin-top: var(--grid-size);">
+    The core count was never the answer. <br>
+    <span class="hl-yellow" style="font-family: inherit; font-size: inherit;">The shape of the dependencies always was.</span>
+  </p>
+</div>
+</div>
+
+---
+
+<small>From [Before GPU Engineering](https://github.com/BEFORE-GPU-ENGINEERING/BEFORE-GPU-ENGINEERING) by Ranjan Yadav, used under the [MIT license](../LICENSE.txt).</small>

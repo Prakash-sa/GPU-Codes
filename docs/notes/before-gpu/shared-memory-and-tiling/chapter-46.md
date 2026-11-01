@@ -1,0 +1,49 @@
+---
+title: "46. What is predication? Why GPUs refuse to branch."
+---
+
+<div class="bge">
+<!-- Title -->
+<h1><span class="hl-yellow" style="font-size: 0.9em;">What is predication? Why GPUs refuse to branch.</span></h1>
+<p class="bge-meta">Phase 3 · Shared Memory &amp; Tiling · Chapter 46 of 56 · notebook date 22 / aug / 26</p>
+
+<p style="margin-top: calc(var(--grid-size) * 1.5);">
+  There is a clever thing gpus do with small if-else branches that seems to violate common sense. Faced with a branch, the hardware sometimes refuses to branch at all. Instead of choosing a path, it runs both sides for everyone, and then quietly throws away the results nobody wanted. This sounds wasteful, and sometimes it is, but more often it is faster than the alternative, and understanding why teaches you something deep about how a bundle of gpu threads really executes.
+</p>
+</div>
+
+## <span class="hl-yellow">The Danger of Branches</span>
+
+<div class="bge">
+<p>Start with why branches are dangerous on a gpu in the first place. The threads run in bundles of a fixed size, and all the threads in a bundle share one instruction stream, marching in lockstep, every thread doing the same operation at the same instant. Now put an if-else in the code where some threads take the if and others take the else. The bundle cannot do two different things at once, it has only one instruction stream. So it is forced to run the if-path with only the if-threads active while the else-threads sit frozen, then run the else-path with only the else-threads active while the if-threads sit frozen. Both paths run one after the other, and on each path some of the threads are idle. That serialization is the classic penalty of a branch inside a bundle, the two sides taking turns instead of running together.</p>
+</div>
+
+## <span class="hl-pink">The Predication Trick</span>
+
+<div class="bge">
+<p>Now the trick. For a small branch, the hardware asks a different question. What if we never split the bundle at all. What if every thread just computes both sides of the branch, and then each thread keeps only the answer that applies to it and discards the other. No splitting, no taking turns, the whole bundle stays together running one straight line of instructions, and the choosing happens quietly at the end by throwing away the unwanted result. This is called predication, and the key is that there was never a real branch in the execution, just a single unbroken stream where each thread silently ignores the part that wasn't meant for it.</p>
+<p>So walk through how each thread ignores a part. Every thread carries a little true-or-false tag for a given operation, based on the condition. The thread computes the operation regardless, but the result is only actually written down if its tag says true, and simply dropped if its tag says false. So the if-threads compute both the if-work and the else-work, but only keep the if-work. The else-threads do the same, but only keep the else-work. Everyone ran the identical straight-line code, nobody split off, and yet each thread ended up with the right answer. The branch dissolved into a single stream with a keep-or-discard flag on each step.</p>
+</div>
+
+## <span class="hl-blue">The Obvious Objection</span>
+
+<div class="bge">
+<p class="handwritten-highlight text-red" style="margin-top: var(--grid-size); margin-bottom: var(--grid-size);">
+  Now the obvious objection, because this should smell inefficient. If every thread computes both sides, isn't that pure wasted work. You're doing the if-work and the else-work for everybody, when each thread only needed one of them.
+</p>
+<p>Yes, and that is exactly the trade. Predication does more total computation, both sides for everyone, in exchange for never splitting the bundle. So when is that a good deal. When the two sides are small. If each side is just a couple of quick operations, computing both is cheap, and you gladly pay that small extra cost to avoid the overhead of splitting the bundle, freezing half the threads, and running two serialized passes. The doubled work is tiny, and you dodged the serialization entirely. So for a short, light branch, running both sides for everyone is faster than the honest branch, even though it computes more.</p>
+<p>But flip it around and the deal falls apart. Suppose each side of the branch is huge, hundreds of operations, or one side does a heavy chunk of work the other doesn't. Now forcing every thread to compute both sides means every thread does hundreds of operations of wasted work it will throw away. That is far more expensive than just splitting the bundle and letting each half do only its own path. So for a big, heavy branch, you actually want the real branch, the serialized split, because at least each thread only does its own side's work once, instead of doing both sides' heavy work in full.</p>
+<p>So the hardware, or the compiler, makes a judgment call based on the size of the branch. Tiny branches get turned into predication, no real branching, both sides computed and selected, staying in one smooth stream. Large branches stay as genuine branches, splitting the bundle and paying the serialization, because that is cheaper than doubling a large amount of work. The whole decision is a cost comparison, is it cheaper to compute both sides for everyone, or cheaper to split up and take turns. Small branches, compute both. Large branches, split.</p>
+
+<!-- Takeaway -->
+<div style="margin-top: calc(var(--grid-size) * 2); margin-bottom: var(--grid-size); border-left: 3px solid var(--ink-red); padding-left: 20px;">
+  <h2 class="text-red" style="font-family: 'Patrick Hand', cursive; font-size: 32px; margin-bottom: var(--grid-size);">
+    ↳ The General Takeaway
+  </h2>
+  <p>So the whole picture. Threads in a bundle share one instruction stream, so a real branch forces the two sides to run serially with half the threads idle on each pass. Predication avoids that by never branching, having every thread compute both sides of a small branch and keep only the result that applies, so the bundle stays whole and flows in a single unbroken stream. It costs extra computation, doing both sides for everyone, which is a great deal when the sides are small and a terrible one when they are large, so tiny branches become predicated and big branches stay as real splits. The deeper lesson is that on this hardware, keeping a bundle marching together is so valuable that its often worth doing extra work to avoid ever breaking it apart, and the fastest code is often the code that never makes the threads disagree in the first place.</p>
+</div>
+</div>
+
+---
+
+<small>From [Before GPU Engineering](https://github.com/BEFORE-GPU-ENGINEERING/BEFORE-GPU-ENGINEERING) by Ranjan Yadav, used under the [MIT license](../LICENSE.txt).</small>

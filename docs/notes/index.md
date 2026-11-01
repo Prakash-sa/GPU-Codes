@@ -16,6 +16,7 @@ is short, with the mental model first and then the practical rules.
 | 9 | [Optimization strategies](09-optimization-strategies.md) | What is my bottleneck, and which fix applies? |
 | 10 | [How GPUs talk to each other](10-multi-gpu-communication.md) | NVLink, NVSwitch, PCIe, InfiniBand, NUMA; NCCL, RCCL, MPI; NVIDIA vs AMD; where data should move |
 | — | [Cheat sheet](cheatsheet.md) | Quick lookup |
+| — | [Before GPU Engineering](before-gpu/index.md) | 56 chapters by Ranjan Yadav: why GPUs are built the way they are, from transistors to profiling. Good to read first |
 
 !!! tip "The one rule"
     Most scientific kernels (stencils, LBM, SpMV, statevector updates) are

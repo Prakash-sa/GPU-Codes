@@ -1,0 +1,56 @@
+---
+title: "48. Register tiling: The tile inside the tile."
+---
+
+<div class="bge">
+<!-- Title -->
+<h1><span class="hl-yellow" style="font-size: 0.9em;">Register tiling: The tile inside the tile.</span></h1>
+<p class="bge-meta">Phase 3 · Shared Memory &amp; Tiling · Chapter 48 of 56 · notebook date 24 / aug / 26</p>
+
+<p style="margin-top: calc(var(--grid-size) * 1.5);">
+  There is a technique that makes fast matrix multiplication several times faster still, on top of the usual trick of staging data in fast shared memory, and it hinges on an idea that sounds almost too simple to matter. You tile a second time, inside the first tiling. And the reason this compounds into a large win rather than a small one is a piece of arithmetic worth internalizing, because two levels of reuse do not add together, they multiply. Understanding why is understanding how the fastest kernels actually reach their speed.
+</p>
+</div>
+
+## <span class="hl-yellow">The First Level of Reuse</span>
+
+<div class="bge">
+<p>Start with the first level, the one most people know. Multiplying matrices has every thread needing the same rows and columns over and over, so the naive version drags each piece of data from slow far memory again and again, drowning in redundant traffic. The fix is to have a group of threads cooperatively load a small block of the matrices into the fast shared memory once, and then everyone reads from there instead of going back to slow memory. Each value hauled once from slow memory now gets reused by many threads. That is the reuse you already know, and it converts the operation from starving on slow-memory traffic into something much healthier.</p>
+<p>But there is a second, subtler bottleneck hiding underneath, and it is what motivates the second tiling. Even after the data sits in fast shared memory, every thread still has to keep reaching into that shared memory for each value it uses, once per multiply. Shared memory is fast, but it is not free, and if every single arithmetic step requires a fresh trip to shared memory, then those trips become the new limit. The threads are no longer starved on slow far memory, but they are now bottlenecked on the constant stream of reads from the shared scratchpad. You moved the wall closer, but there is still a wall.</p>
+</div>
+
+## <span class="hl-pink">Unlocking the Second Level</span>
+
+<div class="bge">
+<p class="handwritten-highlight text-blue" style="margin-top: var(--grid-size); margin-bottom: var(--grid-size);">
+  So the question that unlocks the second level. Is there an even faster place than shared memory, and can each thread stage its own little piece there and reuse it. And there is. Each thread has its own private registers, the absolute fastest storage on the chip, sitting right inside the execution units. So the idea is, instead of each thread computing one output value and fetching from shared memory for every multiply, you make each thread responsible for a small block of output values, and have it pull a little strip of data from shared memory into its private registers just once, then reuse those register-held values across all the output values in its block.
+</p>
+</div>
+
+## <span class="hl-green">Multiplying the Reuse</span>
+
+<div class="bge">
+<p>Walk through why that compounds. Suppose a thread, instead of computing one result, computes a small square of results, say a handful by a handful. To do that it loads a short strip of row data and a short strip of column data from shared memory into its registers. And here is the multiplication, each value in that row strip gets combined with every value in the column strip to produce the little square of outputs. So a single value loaded from shared memory into a register is not used once, it is used once for every element along the other strip. One shared-memory read, many register-speed reuses. The thread pulls a small amount of data into registers and then does a whole square of multiplies out of them without touching shared memory again.</p>
+<p>So now count the two levels together, because this is the whole point. At the first level, each value from slow far memory was reused by the whole group of threads out of shared memory. At the second level, each value pulled from shared memory is reused many times out of registers. So a single value that made the expensive trip from slow memory is first shared across many threads, and then, within each thread, reused many more times from registers. The total reuse is the first factor times the second factor, not the first plus the second. That multiplication is why a second tiling, which sounds like a minor refinement, can lift performance by another large factor. You are not adding a little more reuse, you are multiplying the reuse you already had.</p>
+</div>
+
+## <span class="hl-blue">The Scarcity Constraint</span>
+
+<div class="bge">
+<p class="handwritten-highlight text-red" style="margin-top: var(--grid-size); margin-bottom: var(--grid-size);">
+  Now the objection that keeps this honest, because it cannot be free. If each thread now holds a whole square of results plus strips of input in its private registers, isn't it using far more registers than a thread computing just one value. Yes, and that is the exact cost. Registers are a small, fixed resource on each part of the chip, shared among all the threads running there. The more registers each thread claims for its little block of work, the fewer threads can run at once. And running many threads at once is how the gpu hides its delays, by switching to another ready thread whenever one stalls. So pushing the register tiling too hard, making each thread hold too big a block, starves the chip of the many threads it needs to stay busy, and you lose more from that than you gained from the reuse. It is the same tension that governs everything on this hardware, the fast storage is scarce, and using more of it per thread means fewer threads in flight.
+</p>
+<p>So register tiling is a balance, exactly like the first tiling was. A bigger per-thread block means more reuse from registers and fewer trips to shared memory, but it also means more registers per thread and fewer threads running together. Push it just far enough to get strong reuse while keeping enough threads alive to hide the delays, and no further. The sweet spot is not the maximum, its the point where the two pressures balance.</p>
+
+<!-- Takeaway -->
+<div style="margin-top: calc(var(--grid-size) * 2); margin-bottom: var(--grid-size); border-left: 3px solid var(--ink-red); padding-left: 20px;">
+  <h2 class="text-red" style="font-family: 'Patrick Hand', cursive; font-size: 32px; margin-bottom: var(--grid-size);">
+    ↳ The General Takeaway
+  </h2>
+  <p>So the whole picture. The first tiling stages data from slow far memory into shared memory so a group of threads can reuse it, curing the slow-memory bottleneck. But then reaching into shared memory for every multiply becomes the new limit, so you tile a second time, having each thread pull a small strip into its private registers and reuse those values across a whole block of outputs it computes. The two levels of reuse multiply rather than add, which is why the second tiling delivers another large speedup instead of a marginal one. And it costs registers, which are scarce, so it trades against how many threads can run at once, making it the same balance against the fast, limited storage that shows up everywhere on this hardware. The deep pattern is worth carrying, whenever you have a hierarchy of faster and faster memories, you win by staging data into the fastest one you can and reusing it heavily there, and doing it at every level so the savings compound.</p>
+</div>
+</div>
+
+---
+
+<small>From [Before GPU Engineering](https://github.com/BEFORE-GPU-ENGINEERING/BEFORE-GPU-ENGINEERING) by Ranjan Yadav, used under the [MIT license](../LICENSE.txt).</small>

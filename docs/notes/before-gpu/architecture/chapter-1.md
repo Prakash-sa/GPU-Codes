@@ -1,0 +1,254 @@
+---
+title: "1. Why CPUs Can't Have 10,000 Cores"
+---
+
+<div class="bge">
+<!-- Title -->
+<h1><span class="hl-yellow">Why CPUs Can't Have 10,000 Cores</span></h1>
+<p class="bge-meta">Phase 1 · Part 1: The Architecture · Chapter 1 of 56 · notebook date 15 / jun / 26</p>
+<span class="annotation">*worked out from first principles*</span>
+
+
+
+<!-- Introduction -->
+<p>
+  I used to wonder why a CPU only packs 8 or 12 cores while a GPU easily fits thousands. They use the exact same
+  silicon and obey the same physics. So where does the massive gap come from? Well, it turns out chipmakers can
+  actually put 10,000 tiny compute units on a single chip. They already do it every day. <strong
+    class="hl-green">We just call that chip a GPU.</strong>
+</p>
+
+<p class="text-blue">
+  <span class="arrow">↳</span> The real question I needed to ask wasn't "Why can't a CPU have 10,000 cores?" It
+  was more like... <strong>"Why is a single CPU core so incredibly expensive to build that we can only squeeze a
+    few dozen onto a die?"</strong> To figure that out, I had to break it down from first principles.
+</p>
+
+<!-- Section 1 -->
+</div>
+
+## <span class="hl-blue">First, what is a chip actually made of?</span>
+
+<div class="bge">
+<p>
+  Let's start at the very bottom. The core isn't the smallest unit. The transistor is. Think of a transistor as
+  a microscopic light switch:
+</p>
+
+<ul>
+  <li><span class="text-green bold">On means current flows, which the computer reads as a 1.</span></li>
+  <li><span class="text-red bold">Off means current stops, reading as a 0.</span></li>
+</ul>
+
+<p>
+  That is literally it. The whole machine only understands those 1s and 0s, and transistors are just the
+  physical things flipping between them.
+</p>
+
+<p>
+  One switch on its own is basically useless. But if you wire billions of them together, they start
+  communicating. One switch tells the next one, "hey, if I'm on, you turn off." This massive web of switches is
+  how a chip calculates math, renders video games, and makes decisions. They are so ridiculously tiny that you
+  could fit thousands of them across the width of a human hair.
+</p>
+
+<p>So the ladder looks like this:</p>
+
+<ol>
+  <li><strong>Transistor = a single brick.</strong> Just an on/off switch.</li>
+  <li><strong>Core = a whole room.</strong> Billions of transistors wired together into a brain. Funny enough,
+    this brain mostly guesses things instead of doing actual math.</li>
+  <li><strong>CPU = the entire building.</strong> A few dozen of these rooms sitting under one roof.</li>
+</ol>
+
+<div style="margin-bottom: var(--grid-size); padding-left: 20px;">
+  <p class="handwritten-highlight text-blue" style="margin-bottom: 0;">
+    ↳ The part that blew my mind:
+  </p>
+  <p style="margin-bottom: 0;">
+    Take a modern Apple M-series chip. It packs roughly <strong class="hl-yellow">70 billion transistors</strong> into a square
+    smaller than your thumbnail. And all of that silicon builds maybe <strong class="hl-green">8 to 12 cores</strong>.
+  </p>
+  <p style="margin-bottom: 0;">
+    That is billions of switches for just one core. That ratio right there is the whole secret.
+  </p>
+</div>
+
+<!-- Section 2 -->
+</div>
+
+## <span class="hl-pink">Why not shrink them and cram thousands onto the board?</span>
+
+<div class="bge">
+<p>
+  It all comes down to what actually goes INSIDE a core to make it fast. This is where the big split happens. A
+  CPU is built for <strong class="hl-yellow">latency</strong>. It wants to finish one specific task as fast as
+  humanly possible. A GPU is built for <strong class="hl-green">throughput</strong>. It wants to finish
+  thousands of slower tasks all at the same time. Hold onto that idea because everything else makes sense once
+  you get that.
+</p>
+
+<ol>
+  <li>A CPU core's entire job is chaotic and unpredictable. One millisecond you are gaming, the next you open
+    Chrome, then a background app updates. The instructions change constantly. So the core has to be "smart",
+    and being smart costs a ton of physical silicon.</li>
+
+  <li>Most of that silicon is actually spent guessing instead of doing math. <strong class="hl-yellow">Branch prediction</strong>
+    tries to guess your next instruction before it even runs. <strong class="hl-pink">Out-of-order execution</strong> scrambles
+    instructions on the fly to keep the core busy. These are massive guessing engines that take up physical
+    space to keep the math units fed.</li>
+
+  <li>Then you have <strong class="hl-blue">cache</strong>. Standard RAM is way too slow to feed a fast core. So CPUs put huge
+    memory pools directly on the chip like L1, L2, and L3 cache. On a real CPU die, cache can take up more than
+    half the total chip area! The actual math units just sit in a tiny corner.</li>
+</ol>
+
+<p>
+  Because of all this, a CPU core is massive. Billions of transistors get eaten up by predictors and private
+  caches. You physically hit a ceiling at a few dozen cores.
+</p>
+
+<p>
+  A GPU core, on the other hand, is just a tiny, dumb math unit. No huge cache. No guessing hardware. If you
+  strip away all that "smart" stuff, <strong class="hl-green">a core shrinks by a factor of 100</strong>. That is exactly how you
+  fit thousands of them.
+</p>
+
+<!-- Hand-drawn Core Comparison Diagram -->
+<div style="margin: calc(var(--grid-size) * 1.5) 0; position: relative; width: 100%;">
+  <svg viewBox="0 0 600 250" width="100%" height="auto" style="display: block; font-family: 'Patrick Hand', cursive; overflow: visible;">
+    <defs>
+      <filter id="handdrawn" filterUnits="userSpaceOnUse" x="0" y="0" width="600" height="250">
+        <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" result="noise" />
+        <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.2" xChannelSelector="R" yChannelSelector="G" />
+      </filter>
+    </defs>
+    
+    <!-- CPU Core Layout Box (Sketched Double Line) -->
+    <path d="M 60,35 L 260,35 L 260,215 L 60,215 Z" fill="none" stroke="var(--ink-navy)" stroke-width="2.5" stroke-linecap="round" filter="url(#handdrawn)" />
+    <path d="M 61,34 L 259,34 L 259,214 L 61,214 Z" fill="none" stroke="var(--ink-blue)" stroke-width="1.2" opacity="0.5" stroke-linecap="round" filter="url(#handdrawn)" />
+    
+    <!-- CPU Blocks -->
+    <!-- Control Block (Yellow Highlight) -->
+    <path d="M 70,45 L 250,45 L 250,105 L 70,105 Z" fill="var(--hl-yellow)" opacity="0.35" filter="url(#handdrawn)" />
+    <path d="M 70,45 L 250,45 L 250,105 L 70,105 Z" fill="none" stroke="var(--ink-navy)" stroke-width="1.5" stroke-linecap="round" filter="url(#handdrawn)" />
+    
+    <!-- Cache Block (Blue Highlight) -->
+    <path d="M 70,112 L 250,112 L 250,172 L 70,172 Z" fill="var(--hl-blue)" opacity="0.35" filter="url(#handdrawn)" />
+    <path d="M 70,112 L 250,112 L 250,172 L 70,172 Z" fill="none" stroke="var(--ink-navy)" stroke-width="1.5" stroke-linecap="round" filter="url(#handdrawn)" />
+    
+    <!-- ALU Block (Pink Highlight) -->
+    <path d="M 70,180 L 250,180 L 250,205 L 70,205 Z" fill="var(--hl-pink)" opacity="0.35" filter="url(#handdrawn)" />
+    <path d="M 70,180 L 250,180 L 250,205 L 70,205 Z" fill="none" stroke="var(--ink-navy)" stroke-width="1.5" stroke-linecap="round" filter="url(#handdrawn)" />
+    
+    <!-- GPU SM/Block Layout Box (Sketched Double Line) -->
+    <path d="M 340,35 L 540,35 L 540,215 L 340,215 Z" fill="none" stroke="var(--ink-navy)" stroke-width="2.5" stroke-linecap="round" filter="url(#handdrawn)" />
+    <path d="M 341,34 L 539,34 L 539,214 L 341,214 Z" fill="none" stroke="var(--ink-blue)" stroke-width="1.2" opacity="0.5" stroke-linecap="round" filter="url(#handdrawn)" />
+    
+    <!-- GPU Blocks -->
+    <!-- Control Block (Yellow Highlight) -->
+    <path d="M 350,45 L 530,45 L 530,70 L 350,70 Z" fill="var(--hl-yellow)" opacity="0.35" filter="url(#handdrawn)" />
+    <path d="M 350,45 L 530,45 L 530,70 L 350,70 Z" fill="none" stroke="var(--ink-navy)" stroke-width="1.5" stroke-linecap="round" filter="url(#handdrawn)" />
+    
+    <!-- Cache Block (Blue Highlight) -->
+    <path d="M 350,78 L 530,78 L 530,95 L 350,95 Z" fill="var(--hl-blue)" opacity="0.35" filter="url(#handdrawn)" />
+    <path d="M 350,78 L 530,78 L 530,95 L 350,95 Z" fill="none" stroke="var(--ink-navy)" stroke-width="1.5" stroke-linecap="round" filter="url(#handdrawn)" />
+    
+    <!-- ALU Block (Pink Highlight) -->
+    <path d="M 350,105 L 530,105 L 530,185 L 350,185 Z" fill="var(--hl-pink)" opacity="0.35" filter="url(#handdrawn)" />
+    <path d="M 350,105 L 530,105 L 530,185 L 350,185 Z" fill="none" stroke="var(--ink-navy)" stroke-width="1.5" stroke-linecap="round" filter="url(#handdrawn)" />
+    
+    <!-- ALU Grid Lines (Internal, clean lines without filter for legibility) -->
+    <line x1="386" y1="105" x2="386" y2="185" stroke="var(--ink-navy)" stroke-width="0.8" opacity="0.5" />
+    <line x1="422" y1="105" x2="422" y2="185" stroke="var(--ink-navy)" stroke-width="0.8" opacity="0.5" />
+    <line x1="458" y1="105" x2="458" y2="185" stroke="var(--ink-navy)" stroke-width="0.8" opacity="0.5" />
+    <line x1="494" y1="105" x2="494" y2="185" stroke="var(--ink-navy)" stroke-width="0.8" opacity="0.5" />
+    <line x1="350" y1="125" x2="530" y2="125" stroke="var(--ink-navy)" stroke-width="0.8" opacity="0.5" />
+    <line x1="350" y1="145" x2="530" y2="145" stroke="var(--ink-navy)" stroke-width="0.8" opacity="0.5" />
+    <line x1="350" y1="165" x2="530" y2="165" stroke="var(--ink-navy)" stroke-width="0.8" opacity="0.5" />
+    
+    <!-- Text Labels (crisp, no filter) -->
+    <text x="160" y="25" fill="var(--ink-navy)" font-size="16" font-weight="bold" text-anchor="middle">CPU CORE</text>
+    <text x="160" y="80" fill="var(--ink-black)" font-size="14" font-weight="bold" text-anchor="middle">Control (Manager)</text>
+    <text x="160" y="148" fill="var(--ink-black)" font-size="14" font-weight="bold" text-anchor="middle">Cache (Local Memory)</text>
+    <text x="160" y="198" fill="var(--ink-black)" font-size="14" font-weight="bold" text-anchor="middle">ALU (Worker)</text>
+    
+    <text x="440" y="25" fill="var(--ink-navy)" font-size="16" font-weight="bold" text-anchor="middle">GPU CORE BLOCK (SM)</text>
+    <text x="440" y="62" fill="var(--ink-black)" font-size="12" font-weight="bold" text-anchor="middle">Control</text>
+    <text x="440" y="91" fill="var(--ink-black)" font-size="11" font-weight="bold" text-anchor="middle">Cache</text>
+    <text x="440" y="205" fill="var(--ink-black)" font-size="13" font-weight="bold" text-anchor="middle">ALUs (Hundreds of tiny workers)</text>
+  </svg>
+  <span class="annotation" style="margin-top: 8px; display: block; font-size: 13px;">*cpu: huge manager and cache for one fast worker. gpu: small manager for thousands of dumb workers.*</span>
+</div>
+
+<!-- Section 3 -->
+</div>
+
+## <span class="hl-yellow">Latency vs Throughput</span>
+
+<div class="bge">
+<p>The core concept underneath all of this architecture is Latency vs Throughput.</p>
+
+<ul>
+  <li><strong class="hl-yellow">Latency (CPU)</strong> = time to finish one task from start to finish.</li>
+  <li><strong class="hl-green">Throughput (GPU)</strong> = total work done over a window of time.</li>
+</ul>
+
+<p>
+  A CPU chases zero delay for a single heavy task. A GPU chases thousands of smaller tasks finishing together.
+  It is like comparing one insanely fast sports car dodging traffic versus <span class="text-red">a massive
+    fleet of slow cargo trucks.</span>
+</p>
+
+<!-- Section 4 -->
+</div>
+
+## <span class="hl-blue">So why not run Windows on a GPU?</span>
+
+<div class="bge">
+<p>You might wonder why we don't just run an operating system on a GPU to make it crazy fast. Well, an OS is
+  exactly the type of workload a GPU is terrible at.</p>
+
+<ul>
+  <li><strong class="hl-pink">Endless branching:</strong> An OS is constantly making if/else decisions based on whatever the
+    user decides to click.</li>
+  <li><strong class="hl-blue">Lockstep requirement:</strong> GPUs demand all their thousands of cores do the exact same step at
+    the exact same instant.</li>
+  <li><strong class="hl-yellow">Thread divergence:</strong> If those cores hit different branches in the code, they experience
+    divergence. They can't run together anymore and have to take turns. All that amazing parallel speed
+    collapses into a slow serial crawl.</li>
+  <li><strong class="hl-green">Hardware interrupts:</strong> An OS has to react instantly to random hardware events like a mouse
+    movement. CPUs handle those seamlessly. GPUs hate stopping their huge workflows for sudden interruptions.
+  </li>
+</ul>
+
+<p class="text-blue">
+  <span class="arrow">↳</span> The chaotic code that a CPU eats for breakfast is the exact thing that breaks a
+  GPU's lockstep model.
+</p>
+
+<!-- Conclusion -->
+<div style="margin-top: calc(var(--grid-size) * 2); margin-bottom: var(--grid-size); border-left: 3px solid var(--ink-red); padding-left: 20px;">
+  <h2 class="text-red" style="font-family: 'Patrick Hand', cursive; font-size: 32px; margin-bottom: var(--grid-size);">
+    ↳ The General Takeaway
+  </h2>
+
+  <p>
+    The core count on your laptop isn't a manufacturing limit. It is a very <strong class="hl-yellow">deliberate optimization choice</strong>.
+  </p>
+
+  <p>
+    Every single feature that makes a CPU core snappy and responsive also makes it physically gigantic. You
+    could absolutely strip those features out to fit 10,000 cores on the board.
+  </p>
+
+  <p class="text-red bold" style="font-family: 'Patrick Hand', cursive; font-size: 26px; text-align: center; margin-top: var(--grid-size);">
+    But the moment you do that, you stop building a CPU. <br>
+    <span class="hl-yellow">You just built a GPU.</span>
+  </p>
+</div>
+</div>
+
+---
+
+<small>From [Before GPU Engineering](https://github.com/BEFORE-GPU-ENGINEERING/BEFORE-GPU-ENGINEERING) by Ranjan Yadav, used under the [MIT license](../LICENSE.txt).</small>

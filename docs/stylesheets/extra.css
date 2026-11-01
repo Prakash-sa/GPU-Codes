@@ -1,0 +1,130 @@
+/* Site-wide additions: reading progress, read-page marks, and the Before GPU Engineering
+   chapter styles (notes/before-gpu/), mapped onto the Material theme in light and dark. */
+
+/* --- reading progress, drawn under the header on every page --- */
+.reading-progress {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: 0;
+  background: var(--md-accent-fg-color);
+  pointer-events: none;
+}
+
+/* --- pages you have opened get a tick in the sidebar --- */
+.md-nav__link.is-read::after {
+  content: "✓";
+  margin-left: 0.4em;
+  color: var(--md-typeset-a-color);
+  opacity: 0.7;
+  font-size: 0.85em;
+}
+
+#bge-continue:empty {
+  display: none;
+}
+
+/* --- Before GPU Engineering chapters --- */
+.md-typeset .bge {
+  --grid-size: 1.6em;
+  --ink-black: var(--md-typeset-color);
+  --ink-navy: #2b3a55;
+  --ink-blue: #2563eb;
+  --ink-red: #dc2626;
+  --ink-green: #059669;
+  --hl-yellow: #fef08a;
+  --hl-pink: #fecdd3;
+  --hl-blue: #bfdbfe;
+  --hl-green: #a7f3d0;
+}
+
+[data-md-color-scheme="slate"] .md-typeset .bge {
+  --ink-blue: #7aa7ff;
+  --ink-red: #ff7b72;
+  --ink-green: #3fb950;
+}
+
+.md-typeset .hl-yellow,
+.md-typeset .hl-pink,
+.md-typeset .hl-blue,
+.md-typeset .hl-green {
+  border-radius: 2px;
+  padding: 0 0.15em;
+  color: #1e293b;            /* pastel highlighter: keep dark ink on it in both schemes */
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.md-typeset .hl-yellow { background-color: #fef08a; }
+.md-typeset .hl-pink { background-color: #fecdd3; }
+.md-typeset .hl-blue { background-color: #bfdbfe; }
+.md-typeset .hl-green { background-color: #a7f3d0; }
+
+.md-typeset .bge h1 {
+  margin-bottom: 0.4em;
+}
+
+.md-typeset .bge-meta {
+  margin-top: 0;
+  color: var(--md-default-fg-color--light);
+  font-size: 0.85em;
+}
+
+.md-typeset .bge .text-blue { color: var(--ink-blue); }
+.md-typeset .bge .text-red { color: var(--ink-red); }
+.md-typeset .bge .text-green { color: var(--ink-green); }
+.md-typeset .bge .bold { font-weight: 700; }
+
+.md-typeset .bge .arrow {
+  color: var(--ink-red);
+  font-weight: bold;
+  margin-right: 0.4em;
+}
+
+.md-typeset .bge .annotation {
+  display: block;
+  color: var(--ink-red);
+  font-style: italic;
+  margin-bottom: 1em;
+}
+
+.md-typeset .bge .formula-text {
+  font-size: 1.25em;
+  font-weight: 600;
+  text-align: center;
+}
+
+.md-typeset .bge .handwritten-highlight {
+  font-size: 1.15em;
+  font-weight: bold;
+}
+
+.md-typeset .bge .callout-box {
+  border: 2px solid var(--ink-blue);
+  border-radius: 8px;
+  padding: 0.8em 1.2em;
+  margin-bottom: 1em;
+}
+
+.md-typeset .bge .callout-box.red-ink {
+  border-color: var(--ink-red);
+}
+
+/* Upstream sets a handwriting font inline on takeaway boxes; use the site font instead.
+   The SVG diagrams keep their own (they load it themselves). */
+.md-typeset .bge [style*="Patrick Hand"]:not(svg) {
+  font-family: inherit !important;
+}
+
+.md-typeset .bge svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* The diagrams are drawn in dark ink: give them a paper card in dark mode. */
+[data-md-color-scheme="slate"] .md-typeset .bge svg {
+  background: #faf6ec;
+  border-radius: 8px;
+  padding: 4px;
+}
