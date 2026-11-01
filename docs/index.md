@@ -11,6 +11,7 @@ have run workloads on.
 - **[GPU programming notes](notes/index.md)**: CUDA from the execution model up to
   multi-GPU and profiling.
 - **[Cheat sheet](notes/cheatsheet.md)**: one page of APIs, limits and formulas.
+- **[Interview Q&A](interview-qa.md)**: GPU, ML-systems and multi-GPU interview questions with short answers.
 - **[LeetGPU solutions in Triton](leetgpu/index.md)**: 20 optimized, tested kernels with explanations, T4 vs H100 notes, profiling steps and videos.
 
 ## Reading order
@@ -24,3 +25,4 @@ have run workloads on.
 7. [GPU from Python](notes/07-python.md)
 8. [Programming with Triton](notes/08-triton.md)
 9. [Optimization strategies](notes/09-optimization-strategies.md)
+10. [How GPUs talk to each other](notes/10-multi-gpu-communication.md)

@@ -1,5 +1,9 @@
 # 5. Multi-GPU and NCCL
 
+The basics. For the full hardware and software stack (NVLink, NVSwitch, PCIe,
+InfiniBand, NCCL vs RCCL vs MPI, NVIDIA vs AMD, and where data should and shouldn't
+move), see [How GPUs talk to each other](10-multi-gpu-communication.md).
+
 ## Topology first
 
 ```bash

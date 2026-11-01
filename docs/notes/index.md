@@ -14,6 +14,7 @@ is short, with the mental model first and then the practical rules.
 | 7 | [GPU from Python](07-python.md) | CuPy, Numba, Triton or PyTorch: which one? |
 | 8 | [Programming with Triton](08-triton.md) | How do I write fused, tiled kernels in Python? |
 | 9 | [Optimization strategies](09-optimization-strategies.md) | What is my bottleneck, and which fix applies? |
+| 10 | [How GPUs talk to each other](10-multi-gpu-communication.md) | NVLink, NVSwitch, PCIe, InfiniBand; NCCL, RCCL, MPI; NVIDIA vs AMD; where data should move |
 | — | [Cheat sheet](cheatsheet.md) | Quick lookup |
 
 !!! tip "The one rule"
