@@ -9,6 +9,9 @@ tensor cores busy:
   * the alpha/beta epilogue is fused: C is read once and written once;
   * `triton.autotune` picks the tile shape, num_warps and num_stages (software
     pipelining depth) per (M, N, K).
+
+Comments that start with `mem:` say where the data lives: registers, shared memory,
+the L1/L2 caches, or DRAM (GDDR6 on a T4, HBM3 on an H100). See memory-hierarchy.md.
 """
 import os
 
@@ -49,16 +52,22 @@ def gemm_kernel(a, b, c, M, N, K, alpha, beta,
     a_ptrs = a + rm[:, None] * K + rk[None, :]
     b_ptrs = b + rk[:, None] * N + rn[None, :]
 
+    # mem: fp32 accumulator in registers (128x128 over 256 threads = 64 per thread)
     acc = tl.zeros([BLOCK_M, BLOCK_N], dtype=tl.float32)
     for k in range(0, K, BLOCK_K):
+        # mem: DRAM -> shared memory, num_stages tiles in flight (async copies on sm_80+).
+        # Grouped order makes neighbouring programs re-read these panels from L2
         a_t = tl.load(a_ptrs, mask=(rm[:, None] < M) & (rk[None, :] + k < K), other=0.0)
         b_t = tl.load(b_ptrs, mask=(rk[:, None] + k < K) & (rn[None, :] < N), other=0.0)
+        # mem: tensor cores read the tiles from shared memory (wgmma on H100;
+        # ldmatrix -> registers -> mma on T4)
         acc = tl.dot(a_t, b_t, acc)                  # FP16 x FP16 -> FP32 on tensor cores
         a_ptrs += BLOCK_K
         b_ptrs += BLOCK_K * N
 
     cmask = (rm[:, None] < M) & (rn[None, :] < N)
     c_ptrs = c + rm[:, None] * N + rn[None, :]
+    # mem: epilogue in registers: C is read once, combined, written once
     c_old = tl.load(c_ptrs, mask=cmask, other=0.0).to(tl.float32)
     tl.store(c_ptrs, (alpha * acc + beta * c_old).to(tl.float16), mask=cmask)
 

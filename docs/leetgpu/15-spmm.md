@@ -41,6 +41,20 @@ which is near-FP32 accuracy at well above the FP32 CUDA-core rate.
 | Floor | 8.6 GFLOP / 8.1 TFLOP/s ≈ 1.06 ms | 3 × 8.6 / 495 ≈ 52 µs |
 | CSR alternative | ~3 GFLOP on CUDA cores, but irregular: likely slower | CUDA-core bound, ≥ 45 µs plus conversion |
 
+## Where the data lives
+
+Levels as in [Where the data lives](memory-hierarchy.md). DRAM is GDDR6 on the T4 and HBM3 on the H100.
+
+| Level | In this kernel |
+|---|---|
+| Registers | the fp32 accumulator; for `"tf32x3"`, the hi/lo halves of each operand, split before three tensor-core products |
+| Shared memory | **fp32** tiles are twice the size of the fp16 ones in [09](09-gemm.md): 128×32 + 32×128 floats = 32 KB per stage, 96 KB at 3 stages. That fits an H100, not a T4 (64 KB), and the autotuner drops it there |
+| L2 | A and B panel reuse across programs, as in 09. B is 2048 × 512 × 4 = 4 MB: it fits the H100's L2 but is the T4's entire L2, so expect misses there |
+| DRAM | read A and B, write C: ~46 MB at 4096 × 2048 × 512. The zeros in A still cost bandwidth, because A is stored dense |
+
+`solve_csr` reads `row_ptr`, `col_idx` and `vals` as scalars and gathers rows of B. The
+gathers are random, so they depend on B staying in L2.
+
 ## T4 vs H100
 
 This is the page where **the code must differ**:

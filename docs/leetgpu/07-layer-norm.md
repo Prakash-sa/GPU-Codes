@@ -36,6 +36,20 @@ Bytes = $2 \cdot 4 \cdot 65536 \cdot 512$ = 268 MB.
 | Roofline floor | 0.84 ms | 0.08 ms |
 | `torch.nn.functional.layer_norm` | already a fused CUDA kernel. Expect parity to modest wins, not 5× | same |
 
+## Where the data lives
+
+Levels as in [Where the data lives](memory-hierarchy.md). DRAM is GDDR6 on the T4 and HBM3 on the H100.
+
+| Level | In this kernel |
+|---|---|
+| Registers | the `BLOCK_M × BLOCK_C` tile of x **and** the centred `d = x − mean`. The variance pass reads `d` from registers, so the "two-pass" centred variance costs no extra memory traffic |
+| Shared memory | the cross-warp step of the row sums, when a row spans several warps |
+| L1 / L2 | `w` and `b` (2 KB at C = 512) are read by every program: after the first, they hit cache |
+| DRAM | read x, write y: 268 MB at 65536 × 512 |
+
+The row fits in registers, so each element is read from DRAM once and every statistic
+comes from that copy.
+
 ## T4 vs H100
 
 | | T4 | H100 |

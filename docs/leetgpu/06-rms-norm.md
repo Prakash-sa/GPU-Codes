@@ -38,6 +38,17 @@ cannot help at this size. What helps:
   is often faster at N = 100K. Measure it.
 - **CUDA Graphs** if it runs in a loop.
 
+## Where the data lives
+
+Levels as in [Where the data lives](memory-hierarchy.md). DRAM is GDDR6 on the T4 and HBM3 on the H100.
+
+| Level | In this kernel |
+|---|---|
+| Registers | each program's block of x; `gamma`, `beta` and `eps` are scalar kernel arguments (constant cache, then registers) |
+| Shared memory | the cross-warp step of the sum of squares |
+| L2 | the P partial sums; the re-read of x in kernel 2 (N ≤ 100K is 400 KB, well inside L2) |
+| DRAM | read x, write y: 800 KB. At this size the two launches cost more than the data |
+
 ## T4 vs H100
 
 | | T4 | H100 |

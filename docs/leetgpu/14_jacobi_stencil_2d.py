@@ -7,6 +7,9 @@ One program per BLOCK_R x BLOCK_C tile. The four shifted loads overlap almost en
 so after the first one they hit L1/L2: DRAM traffic stays close to the minimum of one
 read and one write per cell (8 bytes), and the kernel is bandwidth bound. Tiles are
 wide along columns so every row segment is a coalesced 512-byte access.
+
+Comments that start with `mem:` say where the data lives: registers, shared memory,
+the L1/L2 caches, or DRAM (GDDR6 on a T4, HBM3 on an H100). See memory-hierarchy.md.
 """
 import torch
 import triton
@@ -22,11 +25,15 @@ def jacobi_kernel(src, dst, rows, cols, BLOCK_R: tl.constexpr, BLOCK_C: tl.const
     p = src + r * cols + c
 
     center = tl.load(p, mask=inb & ~interior, other=0.0)        # only the boundary needs it
+    # mem: four neighbour tiles -> registers. left/right share the centre row's cache
+    # lines (L1); up/down were loaded by this tile or its neighbours (L1/L2).
+    # So DRAM sees ~1 read per point, not 4
     up = tl.load(p - cols, mask=interior, other=0.0)
     down = tl.load(p + cols, mask=interior, other=0.0)
     left = tl.load(p - 1, mask=interior, other=0.0)
     right = tl.load(p + 1, mask=interior, other=0.0)
     val = tl.where(interior, 0.25 * (up + down + left + right), center)
+    # mem: registers -> DRAM, once per point
     tl.store(dst + r * cols + c, val, mask=inb)
 
 

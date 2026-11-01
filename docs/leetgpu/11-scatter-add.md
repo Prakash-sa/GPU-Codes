@@ -52,6 +52,20 @@ targets) ≈ 540 MB.
 The output (50K × 128 × 4 = 25.6 MB) fits in H100's 50 MB L2, so atomics resolve in L2.
 On T4 (4 MB of L2) they spill to DRAM, and atomics cost more there.
 
+## Where the data lives
+
+Levels as in [Where the data lives](memory-hierarchy.md). DRAM is GDDR6 on the T4 and HBM3 on the H100.
+
+| Level | In this kernel |
+|---|---|
+| Registers | each program's `BLOCK_N × BLOCK_D` tile of `src` and its target indices |
+| L2 | **the atomics run here**: `tl.atomic_add` is executed by the atomic units next to the L2 slices, not in the SM. `output` is 50K × 128 × 4 = 25.6 MB: it fits the H100's 50 MB L2, so most read-modify-writes never reach DRAM. On a T4 (4 MB) many miss |
+| Contention | two programs adding to the same row serialize at that L2 slice. Skewed indices make this the bottleneck |
+| DRAM | read src (512 MB) and index (4 MB) once; output traffic depends on the L2 hits above |
+
+`solve_sorted` moves the accumulation from L2 into **registers**: each program sums one
+output row's sources in `acc` and stores once, with no atomics.
+
 ## T4 vs H100
 
 | | T4 | H100 |

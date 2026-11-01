@@ -36,6 +36,20 @@ signature: the SMs are idle because there is nothing to compute. The real optimi
 is not in this kernel. It is **fusing the add into the neighbouring operation** so the
 300 MB round trip disappears.
 
+## Where the data lives
+
+Levels as in [Where the data lives](memory-hierarchy.md). DRAM is GDDR6 on the T4 and HBM3 on the H100.
+
+| Level | In this kernel |
+|---|---|
+| Registers | each program's 1,024 values of `x`, `y` and `x + y`. With `num_warps=4` (128 threads) that is 8 floats per thread per tensor |
+| Shared memory / L1 | not used: nothing is reused, so the loads only pass through L1 |
+| L2 | every byte passes through once, nothing is re-read |
+| DRAM | read A and B once, write C once: 300 MB at N = 25M. This traffic *is* the runtime |
+
+Data touched once can't be cached. The only lever is moving each byte once, at full
+width, which the masked block loads already do.
+
 ## T4 vs H100
 
 | | T4 | H100 |

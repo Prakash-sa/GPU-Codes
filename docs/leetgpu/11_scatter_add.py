@@ -12,6 +12,9 @@ solve_sorted() - deterministic. Sort rows by target once (torch.sort, outside th
     kernel), then one program per output row adds its run of sources in a fixed order:
     no atomics, bit-reproducible. Worth it when the same graph is reused every step.
     Uses torch for the sort, so it is for study, not for LeetGPU.
+
+Comments that start with `mem:` say where the data lives: registers, shared memory,
+the L1/L2 caches, or DRAM (GDDR6 on a T4, HBM3 on an H100). See memory-hierarchy.md.
 """
 import torch
 import triton
@@ -24,8 +27,12 @@ def scatter_add_kernel(src, index, out, N, D, BLOCK_N: tl.constexpr, BLOCK_D: tl
     cols = tl.program_id(1) * BLOCK_D + tl.arange(0, BLOCK_D)
     rmask = rows < N
     mask = rmask[:, None] & (cols[None, :] < D)
+    # mem: DRAM -> registers: target rows for this tile
     tgt = tl.load(index + rows, mask=rmask, other=0).to(tl.int64)
+    # mem: DRAM -> registers: BLOCK_N x BLOCK_D source values, read once
     vals = tl.load(src + rows[:, None].to(tl.int64) * D + cols[None, :], mask=mask, other=0.0)
+    # mem: the read-modify-write runs in L2's atomic units, not the SM. output (25.6 MB)
+    # fits the H100's 50 MB L2, so most adds never reach DRAM. Same-row adds serialize
     tl.atomic_add(out + tgt[:, None] * D + cols[None, :], vals, mask=mask, sem="relaxed")
 
 
@@ -43,12 +50,15 @@ def segment_sum_kernel(src, perm, row_ptr, out, D, BLOCK_D: tl.constexpr):
     m = tl.program_id(0)
     cols = tl.program_id(1) * BLOCK_D + tl.arange(0, BLOCK_D)
     cmask = cols < D
+    # mem: segment bounds are scalars, via L2
     start = tl.load(row_ptr + m)
     end = tl.load(row_ptr + m + 1)
     acc = tl.zeros([BLOCK_D], dtype=tl.float32)
     for p in range(start, end):                    # fixed order -> reproducible
         r = tl.load(perm + p).to(tl.int64)
+        # mem: gather a source row from DRAM; the sum stays in registers, no atomics
         acc += tl.load(src + r * D + cols, mask=cmask, other=0.0)
+    # mem: one store per output row: registers -> DRAM
     tl.store(out + m.to(tl.int64) * D + cols, acc, mask=cmask)
 
 

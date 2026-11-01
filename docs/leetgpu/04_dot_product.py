@@ -2,6 +2,9 @@
 
 The reduction pattern from 03_reduction.py with the multiply fused into the load loop:
 A * B is never written to memory. Partials are combined in float64.
+
+Comments that start with `mem:` say where the data lives: registers, shared memory,
+the L1/L2 caches, or DRAM (GDDR6 on a T4, HBM3 on an H100). See memory-hierarchy.md.
 """
 import torch
 import triton
@@ -16,13 +19,16 @@ def partial_dot_kernel(a, b, partials, N, BLOCK: tl.constexpr):
     for start in range(pid * BLOCK, N, nprog * BLOCK):
         offs = start + tl.arange(0, BLOCK)
         mask = offs < N
+        # mem: DRAM -> registers; the product a * b exists only in registers, never stored
         acc += tl.load(a + offs, mask=mask, other=0.0) * tl.load(b + offs, mask=mask, other=0.0)
+    # mem: tl.sum = warp shuffles, then shared memory across warps; one float64 -> L2
     tl.store(partials + pid, tl.sum(acc.to(tl.float64), axis=0))
 
 
 @triton.jit
 def final_sum_kernel(partials, out, P, BLOCK_P: tl.constexpr):
     offs = tl.arange(0, BLOCK_P)
+    # mem: the P partials come back from L2
     p = tl.load(partials + offs, mask=offs < P, other=0.0)
     tl.store(out, tl.sum(p, axis=0).to(tl.float32))
 

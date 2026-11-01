@@ -35,6 +35,22 @@ Bytes ≈ $2 \cdot 4 \cdot 8192^2$ = 537 MB.
 | Floor | 1.7 ms | 0.16 ms |
 | PyTorch slicing reference | clone + 4 slice reads + adds: 3–5× the traffic | same |
 
+## Where the data lives
+
+Levels as in [Where the data lives](memory-hierarchy.md). DRAM is GDDR6 on the T4 and HBM3 on the H100.
+
+| Level | In this kernel |
+|---|---|
+| Registers | the four neighbour tiles (16 × 128 each) and the result |
+| L1 | `left` and `right` are the centre row shifted by one: the same cache lines, so L1 hits. `up` and `down` are this tile's neighbouring rows, mostly loaded already |
+| L2 | the halo rows above and below the tile were loaded by the neighbouring programs: L2 hits |
+| DRAM | ideally each element read once and written once: 537 MB at 8192² |
+
+Four loads per point look like 4× the traffic, but L1 and L2 absorb the repeats. Nsight
+Compute's DRAM bytes should come out near 2 × 4 × rows × cols. A CUDA stencil would load
+the tile and halo into `__shared__` explicitly. Triton has no shared-memory API and
+relies on the caches.
+
 ## T4 vs H100
 
 | | T4 | H100 |

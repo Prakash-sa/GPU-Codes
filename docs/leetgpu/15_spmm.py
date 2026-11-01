@@ -16,6 +16,9 @@ T4 (sm_75) has no TF32 tensor cores, so _dot_precision() falls back to "ieee" (F
 
 solve_csr() is the sparse version, for comparison and for genuinely sparse inputs.
 It builds CSR with torch.nonzero, so it is for study, not for LeetGPU.
+
+Comments that start with `mem:` say where the data lives: registers, shared memory,
+the L1/L2 caches, or DRAM (GDDR6 on a T4, HBM3 on an H100). See memory-hierarchy.md.
 """
 import os
 
@@ -47,12 +50,17 @@ def dense_mm_kernel(a, b, c, M, N, K,
     b_ptrs = b + rn[:, None].to(tl.int64) * K + rk[None, :]
     acc = tl.zeros([BLOCK_M, BLOCK_N], dtype=tl.float32)
     for n0 in range(0, N, BLOCK_K):
+        # mem: DRAM -> shared memory, num_stages fp32 tiles: 32 KB per stage at 128x128x32.
+        # Fits the H100's 228 KB; the T4's 64 KB only takes the smaller configs
         a_t = tl.load(a_ptrs, mask=(rm[:, None] < M) & (rn[None, :] + n0 < N), other=0.0)
         b_t = tl.load(b_ptrs, mask=(rn[:, None] + n0 < N) & (rk[None, :] < K), other=0.0)
+        # mem: tensor cores (tf32x3 splits hi/lo in registers: 3 MMAs) or FP32 FMA
+        # on T4; acc stays in registers
         acc = tl.dot(a_t, b_t, acc, input_precision=PREC)
         a_ptrs += BLOCK_K
         b_ptrs += BLOCK_K * K
     mask = (rm[:, None] < M) & (rk[None, :] < K)
+    # mem: registers -> DRAM
     tl.store(c + rm[:, None].to(tl.int64) * K + rk[None, :], acc, mask=mask)
 
 
@@ -78,8 +86,11 @@ def csr_spmm_kernel(row_ptr, col_idx, vals, b, c, K, BLOCK_K: tl.constexpr):
     end = tl.load(row_ptr + row + 1)
     acc = tl.zeros([BLOCK_K], dtype=tl.float32)
     for p in range(start, end):                    # only the non-zeros of this row
+        # mem: CSR metadata: scalar loads via L2
         col = tl.load(col_idx + p).to(tl.int64)
+        # mem: gather a row of B. The rows are random, so this relies on B (4 MB) staying in L2
         acc += tl.load(vals + p) * tl.load(b + col * K + cols, mask=cmask, other=0.0)
+    # mem: registers -> DRAM
     tl.store(c + row.to(tl.int64) * K + cols, acc, mask=cmask)
 
 

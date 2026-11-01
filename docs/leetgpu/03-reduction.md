@@ -48,6 +48,24 @@ CUDA Graphs, or a single kernel where the *last program to finish* does the fina
 (an atomic counter: "threadfence reduction"). The second keeps determinism and saves
 one launch.
 
+## Where the data lives
+
+Levels as in [Where the data lives](memory-hierarchy.md). DRAM is GDDR6 on the T4 and HBM3 on the H100.
+
+| Level | In this kernel |
+|---|---|
+| Registers | `acc`: a 4,096-wide fp32 vector, 16 per thread, carried through the whole grid-stride loop. Each element of x is added into a register and never written back |
+| Shared memory | only the final `tl.sum`: warp shuffles, then one value per warp through shared memory |
+| L2 | the P float64 partials written by kernel 1 are read by kernel 2 straight from L2 |
+| DRAM | read x once: 16 MB. Everything else is a few KB |
+
+The persistent loop is what keeps the running sum in registers. One program per block
+would instead write one partial per 4,096 elements, so 1,024 partials, and need a
+second reduction pass over them.
+
+The 16 MB input fits in the H100's 50 MB L2. A timing loop that doesn't flush L2 then
+measures L2 bandwidth, not DRAM. `do_bench` flushes it.
+
 ## T4 vs H100
 
 | | T4 | H100 |

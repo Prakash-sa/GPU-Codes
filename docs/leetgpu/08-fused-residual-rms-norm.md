@@ -42,6 +42,19 @@ Fused bytes = $3 \cdot 4 \cdot 4096^2$ = 201 MB.
 The speedup comes from bytes, not FLOPs. Say it that way in an interview: "eager moves
 ~40 bytes per element, fused moves 12, so ~3× is the expected ceiling."
 
+## Where the data lives
+
+Levels as in [Where the data lives](memory-hierarchy.md). DRAM is GDDR6 on the T4 and HBM3 on the H100.
+
+| Level | In this kernel |
+|---|---|
+| Registers | ONE_PASS (C ≤ 8192): the whole row of `z = x + r` stays in registers between the sum of squares and the output. The intermediate `z` is never written to DRAM |
+| Spills → DRAM | the reason for the 8,192 cut-off. A longer row in registers would spill to local memory, which is DRAM. The two-pass path keeps only a 4,096-wide chunk in registers |
+| L2 | two-pass: the second read of the row (≤ 512 KB for x and r) is meant to hit L2. That holds while the rows in flight fit: likely on an H100 (50 MB), not guaranteed on a T4 (4 MB) |
+| DRAM | read x and r, write out: 201 MB at 4096 × 4096. The unfused version also writes and re-reads `z` |
+
+This is fusion seen through the hierarchy: the intermediate moves from DRAM to registers.
+
 ## T4 vs H100
 
 | | T4 | H100 |

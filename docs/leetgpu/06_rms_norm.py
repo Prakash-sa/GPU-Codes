@@ -6,6 +6,9 @@ Same shape of problem as 05_softmax.py: one global statistic, then an elementwis
   1. Each program writes the partial sum of x^2 for its chunk.
   2. Each program re-adds the partials (cheap: ~N / BLOCK values), computes rstd once,
      and writes its chunk.
+
+Comments that start with `mem:` say where the data lives: registers, shared memory,
+the L1/L2 caches, or DRAM (GDDR6 on a T4, HBM3 on an H100). See memory-hierarchy.md.
 """
 import torch
 import triton
@@ -16,6 +19,7 @@ import triton.language as tl
 def sumsq_partial_kernel(x, partials, N, BLOCK: tl.constexpr):
     pid = tl.program_id(0)
     offs = pid * BLOCK + tl.arange(0, BLOCK)
+    # mem: DRAM -> registers; the sum of squares never leaves the chip
     v = tl.load(x + offs, mask=offs < N, other=0.0)
     tl.store(partials + pid, tl.sum(v * v, axis=0))
 
@@ -24,11 +28,14 @@ def sumsq_partial_kernel(x, partials, N, BLOCK: tl.constexpr):
 def rms_apply_kernel(x, y, partials, gamma, beta, N, P, eps,
                      BLOCK: tl.constexpr, BLOCK_P: tl.constexpr):
     p = tl.arange(0, BLOCK_P)
+    # mem: the P partials, from L2
     total = tl.sum(tl.load(partials + p, mask=p < P, other=0.0), axis=0)
+    # mem: gamma, beta, eps are scalar arguments: constant cache -> registers
     scale = gamma * tl.rsqrt(total / N + eps)      # fold gamma into one multiplier
 
     offs = tl.program_id(0) * BLOCK + tl.arange(0, BLOCK)
     mask = offs < N
+    # mem: re-read of x (<= 400 KB): an L2 hit
     v = tl.load(x + offs, mask=mask)
     tl.store(y + offs, v * scale + beta, mask=mask)
 

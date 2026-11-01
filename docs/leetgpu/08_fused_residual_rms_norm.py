@@ -11,6 +11,9 @@ C can be up to 65536, too long for one register tile, so there are two code path
   two-pass  (larger C):  loop over the row for sum(z^2), then loop again to write.
                          The second read mostly hits L2 (a row is <= 512 KB).
 Row offsets use int64: N * C can reach 2^32, which overflows int32.
+
+Comments that start with `mem:` say where the data lives: registers, shared memory,
+the L1/L2 caches, or DRAM (GDDR6 on a T4, HBM3 on an H100). See memory-hierarchy.md.
 """
 import torch
 import triton
@@ -24,21 +27,28 @@ def residual_rmsnorm_kernel(x, res, w, out, C, eps,
     if ONE_PASS:
         cols = tl.arange(0, BLOCK_C)
         mask = cols < C
+        # mem: DRAM -> registers. The whole row of z = x + r stays in registers;
+        # z is never written to DRAM (that is the fusion)
         z = tl.load(x + row + cols, mask=mask, other=0.0) + tl.load(res + row + cols, mask=mask, other=0.0)
         rstd = tl.rsqrt(tl.sum(z * z, axis=0) / C + eps)
+        # mem: w is shared by every row: L1/L2 hit
         wv = tl.load(w + cols, mask=mask)
+        # mem: registers -> DRAM
         tl.store(out + row + cols, z * rstd * wv, mask=mask)
     else:
         acc = tl.zeros([BLOCK_C], dtype=tl.float32)
         for start in range(0, C, BLOCK_C):
             cols = start + tl.arange(0, BLOCK_C)
             mask = cols < C
+            # mem: pass 1, one 4,096-wide chunk in registers at a time. A whole long row
+            # would spill, and spills live in DRAM
             z = tl.load(x + row + cols, mask=mask, other=0.0) + tl.load(res + row + cols, mask=mask, other=0.0)
             acc += z * z
         rstd = tl.rsqrt(tl.sum(acc, axis=0) / C + eps)
         for start in range(0, C, BLOCK_C):
             cols = start + tl.arange(0, BLOCK_C)
             mask = cols < C
+            # mem: pass 2 re-reads the row (<= 512 KB for x and r): mostly from L2
             z = tl.load(x + row + cols, mask=mask, other=0.0) + tl.load(res + row + cols, mask=mask, other=0.0)
             wv = tl.load(w + cols, mask=mask)
             tl.store(out + row + cols, z * rstd * wv, mask=mask)

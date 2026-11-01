@@ -394,6 +394,43 @@ def norm_backward():
     save(fig, "norm-backward.png")
 
 
+# ---------------------------------------------------------------- memory hierarchy
+
+def memory_hierarchy():
+    fig, ax = canvas(14, 7.0, (0, 28), (0, 14))
+    ax.text(0.3, 13.3, "Where the data lives", fontsize=14, weight="bold", color=INK)
+    for x, label in ((9.6, "T4 (sm_75)"), (14.2, "H100 SXM (sm_90)"), (19.2, "Triton code that lands here")):
+        ax.text(x, 12.3, label, fontsize=11, weight="bold", color=INK)
+    rows = [
+        ("Registers", "per thread", BLUE_L, BLUE, 3.4,
+         "256 KB / SM", "256 KB / SM",
+         "block values from tl.load,\naccumulators, loop-carried state"),
+        ("Shared memory / L1", "SRAM, per SM", TEAL_L, TEAL, 5.0,
+         "96 KB / SM\n(≤ 64 KB shared)", "256 KB / SM\n(≤ 228 KB shared)",
+         "tl.dot operand tiles (num_stages),\ntl.trans, cross-warp tl.sum / scan"),
+        ("L2 cache", "SRAM, whole GPU", AMBER_L, AMBER, 6.6,
+         "4 MB", "50 MB",
+         "every load and store passes here;\ntl.atomic_add; re-reads of hot data"),
+        ("DRAM", "GDDR6 on T4, HBM3 on H100", PURPLE_L, PURPLE, 8.2,
+         "16 GB\n320 GB/s", "80 GB\n3,350 GB/s",
+         "torch tensors: inputs, outputs,\npartials, register spills"),
+    ]
+    y = 10.0
+    for name, sub, fc, ec, w, t4, h100, triton_txt in rows:
+        x0 = 5.0 - w / 2
+        box(ax, x0, y, w, 2.0, fc, ec, lw=2)
+        ax.text(5.0, y + 1.25, name, ha="center", fontsize=11, weight="bold", color=INK)
+        ax.text(5.0, y + 0.55, sub, ha="center", fontsize=8.5, color=GRAY)
+        ax.text(9.6, y + 1.0, t4, va="center", fontsize=10, color=INK)
+        ax.text(14.2, y + 1.0, h100, va="center", fontsize=10, color=INK)
+        ax.text(19.2, y + 1.0, triton_txt, va="center", fontsize=9.5, family=MONO, color=INK)
+        y -= 2.7
+    arrow(ax, (0.35, 11.8), (0.35, 2.0), GRAY)
+    ax.text(0.9, 0.5, "each level down: bigger, ~several x slower;\nDRAM is ~100x a register's latency",
+            fontsize=9, color=GRAY)
+    save(fig, "memory-hierarchy.png")
+
+
 if __name__ == "__main__":
     transpose()
     reduction()
@@ -408,3 +445,4 @@ if __name__ == "__main__":
     ln_gemm_fusion()
     flash_attention()
     norm_backward()
+    memory_hierarchy()

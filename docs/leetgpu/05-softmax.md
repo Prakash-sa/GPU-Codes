@@ -44,6 +44,21 @@ the two ~3–5 µs launches cost more than the data movement.
 | Roofline floor | 19 µs | 1.8 µs |
 | What dominates | DRAM | kernel launches |
 
+## Where the data lives
+
+Levels as in [Where the data lives](memory-hierarchy.md). DRAM is GDDR6 on the T4 and HBM3 on the H100.
+
+| Level | In this kernel |
+|---|---|
+| Registers | each program's 4,096-value block, its max and its sum |
+| Shared memory | the cross-warp step of `tl.max` and `tl.sum` |
+| L2 | the P partial maxes and sums: every program of kernel 2 reads all of them, so they come from L2 (or L1). Also the **second read of x**: at N ≤ 500K the array is ≤ 2 MB, which fits both L2s (4 MB, 50 MB) |
+| DRAM | read x, write y: 4 MB. The re-read of x in kernel 2 is mostly an L2 hit |
+
+Two kernels read x, but at this size only one of the reads costs DRAM bandwidth. For a
+vector bigger than L2, the re-read would go to DRAM and online softmax (one pass, see
+[18](18-softmax-attention.md)) would win.
+
 ## T4 vs H100
 
 | | T4 | H100 |

@@ -48,6 +48,21 @@ At the perf size the kernel is **latency bound**. Expect a few µs, dominated by
 and the serial K loop. The algorithm pays off at long sequences (N in the thousands),
 where the naive version's $O(MN)$ memory traffic explodes.
 
+## Where the data lives
+
+Levels as in [Where the data lives](memory-hierarchy.md). DRAM is GDDR6 on the T4 and HBM3 on the H100.
+
+| Level | In this kernel |
+|---|---|
+| Registers | the Q tile, the `BLOCK_M × BLOCK_D` fp32 output accumulator, `m_i` and `l_i`, and the score tile `s`/`p`. **The M × N score matrix exists only one block at a time, in registers** |
+| Shared memory | K and V tiles for the two `tl.dot`s. In fp32 at BLOCK_N = 64 and d = 128 each is 32 KB, so ~64 KB per stage. Fine on an H100; on a T4 check `k.metadata.shared` and fall back to `BLOCK_N=32, num_stages=1` if the autotuner reports nothing fits |
+| L2 | K and V are 128 KB each at N = 256. Every program reads all of them, so after the first they come from L2 |
+| DRAM | Q, K, V read and the output written once: ~0.75 MB |
+
+This is the whole FlashAttention argument in terms of the hierarchy. Standard attention
+writes S and P (M × N) to DRAM and reads them back. Flash attention keeps them in SRAM
+(registers and shared memory) and never writes them.
+
 ## T4 vs H100
 
 | | T4 | H100 |

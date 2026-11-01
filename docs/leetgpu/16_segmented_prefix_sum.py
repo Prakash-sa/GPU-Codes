@@ -18,6 +18,9 @@ Across blocks (classic 3-phase "reduce-then-scan"):
 Precision: everything is scanned in float64. A segment can span the whole array
 (N up to 100M), and a float32 running sum over a single 50K segment already drifts
 by ~0.02, which fails the 1e-3 tolerance near zero crossings.
+
+Comments that start with `mem:` say where the data lives: registers, shared memory,
+the L1/L2 caches, or DRAM (GDDR6 on a T4, HBM3 on an H100). See memory-hierarchy.md.
 """
 import torch
 import triton
@@ -32,6 +35,8 @@ def seg_combine(v1, f1, v2, f2):
 @triton.jit
 def _load_shifted(values, flags, offs, N):
     mask = offs < N
+    # mem: DRAM -> registers. values[offs - 1] reuses the cache lines of the
+    # neighbouring elements: L1 hits
     f = tl.load(flags + offs, mask=mask, other=0)
     prev = tl.load(values + offs - 1, mask=mask & (offs > 0), other=0.0)
     return tl.where(f != 0, 0.0, prev).to(tl.float64), f
@@ -42,8 +47,11 @@ def block_aggregate_kernel(values, flags, agg_v, agg_f, N, BLOCK: tl.constexpr):
     pid = tl.program_id(0)
     offs = pid * BLOCK + tl.arange(0, BLOCK)
     w, f = _load_shifted(values, flags, offs, N)
+    # mem: float64 scan in registers (16 doubles per thread), shuffles within a warp,
+    # shared memory across warps
     sv, sf = tl.associative_scan((w, f), 0, seg_combine)
     last = tl.arange(0, BLOCK) == BLOCK - 1         # padded lanes are identity (0, 0)
+    # mem: one aggregate per block -> L2 (~12K blocks, read back by the carry kernel)
     tl.store(agg_v + pid, tl.sum(tl.where(last, sv, 0.0), axis=0))   # float64
     tl.store(agg_f + pid, tl.max(tl.where(last, sf, 0), axis=0))
 
@@ -57,6 +65,7 @@ def carry_scan_kernel(agg_v, agg_f, carry, NB, BLOCK: tl.constexpr):
     for start in range(0, NB, BLOCK):
         b = start + idx
         m = b < NB
+        # mem: aggregates from L2; `run` carries the prefix in registers between chunks
         v = tl.load(agg_v + b, mask=m, other=0.0)
         f = tl.load(agg_f + b, mask=m, other=0)
         sv, sf = tl.associative_scan((v, f), 0, seg_combine)
@@ -71,8 +80,11 @@ def block_scan_kernel(values, flags, carry, out, N, BLOCK: tl.constexpr):
     offs = pid * BLOCK + tl.arange(0, BLOCK)
     w, f = _load_shifted(values, flags, offs, N)
     sv, sf = tl.associative_scan((w, f), 0, seg_combine)
+    # mem: this block's carry: one float64 from L2
     c = tl.load(carry + pid)
     res = tl.where(sf != 0, sv, c + sv)
+    # mem: registers -> DRAM. values and flags were read twice from DRAM (aggregate
+    # and scan passes): 400 MB at N = 50M is far more than L2
     tl.store(out + offs, res.to(tl.float32), mask=offs < N)
 
 

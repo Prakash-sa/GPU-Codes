@@ -7,6 +7,9 @@ programs. Two kernels:
   2. Each program loads all partials (only ~N / BLOCK of them), merges them with the
      online-softmax rule  S = sum_b s_b * exp(m_b - M),  then writes exp(x - M) / S.
 Traffic: 2 reads + 1 write of x (the minimum for a two-pass softmax); 2 launches.
+
+Comments that start with `mem:` say where the data lives: registers, shared memory,
+the L1/L2 caches, or DRAM (GDDR6 on a T4, HBM3 on an H100). See memory-hierarchy.md.
 """
 import torch
 import triton
@@ -17,9 +20,12 @@ import triton.language as tl
 def softmax_partial_kernel(x, part_max, part_sum, N, BLOCK: tl.constexpr):
     pid = tl.program_id(0)
     offs = pid * BLOCK + tl.arange(0, BLOCK)
+    # mem: DRAM -> registers, 4,096 values per program
     v = tl.load(x + offs, mask=offs < N, other=-float("inf"))
+    # mem: reductions = shuffles in registers, then shared memory across warps
     m = tl.max(v, axis=0)
     s = tl.sum(tl.exp(v - m), axis=0)              # masked lanes: exp(-inf) = 0
+    # mem: two floats per program -> L2, where kernel 2 finds them
     tl.store(part_max + pid, m)
     tl.store(part_sum + pid, s)
 
@@ -29,6 +35,7 @@ def softmax_normalize_kernel(x, y, part_max, part_sum, N, P,
                              BLOCK: tl.constexpr, BLOCK_P: tl.constexpr):
     # Every program merges the (small) partial arrays itself: no third launch needed.
     p = tl.arange(0, BLOCK_P)
+    # mem: every program reads all P partials: L1/L2 hits
     pm = tl.load(part_max + p, mask=p < P, other=-float("inf"))
     ps = tl.load(part_sum + p, mask=p < P, other=0.0)
     M = tl.max(pm, axis=0)
@@ -36,7 +43,9 @@ def softmax_normalize_kernel(x, y, part_max, part_sum, N, P,
 
     offs = tl.program_id(0) * BLOCK + tl.arange(0, BLOCK)
     mask = offs < N
+    # mem: second read of x. N <= 500K is <= 2 MB, which fits L2, so this is mostly an L2 hit
     v = tl.load(x + offs, mask=mask, other=-float("inf"))
+    # mem: registers -> DRAM
     tl.store(y + offs, tl.exp(v - M) / S, mask=mask)
 
 

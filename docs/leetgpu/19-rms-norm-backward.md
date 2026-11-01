@@ -45,6 +45,21 @@ Bytes = read x, dy + write dx = $3 \cdot 4 \cdot 16384 \cdot 4096$ = 805 MB.
 | Floor | 2.5 ms | 0.24 ms |
 | PyTorch autograd | recomputes rstd, several elementwise kernels + a column `sum`: ~2–3× the bytes | same |
 
+## Where the data lives
+
+Levels as in [Where the data lives](memory-hierarchy.md). DRAM is GDDR6 on the T4 and HBM3 on the H100.
+
+| Level | In this kernel |
+|---|---|
+| Registers | `w` (loaded once per program, reused for all its rows), the row of x and dy, and the `dw_acc` column accumulator. That is four C-wide vectors, 32 floats per thread at C = 4096 with 16 warps. At C = 16,384 it is 4× more, which is where spills start |
+| Shared memory | the two row sums per row (`sum(x²)` and `sum(g · x̂)`) across warps |
+| L2 | the `[P, C]` partials: 4.3 MB on an H100 (P = 264), 1.3 MB on a T4 (P = 80). Both fit in L2, so the column-sum kernel reads them from L2 |
+| DRAM | read x and dy, write dx: 805 MB at 16384 × 4096 |
+
+dw is a column sum over all rows. The persistent grid turns it into a register
+accumulation per program plus one small L2-resident pass. Atomics into a C-wide array
+would hit the same L2 lines from every program.
+
 ## T4 vs H100
 
 | | T4 | H100 |

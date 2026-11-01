@@ -6,6 +6,9 @@ Rows are short (C <= 4096), so a program normalizes BLOCK_M rows at once from a
 [BLOCK_M, BLOCK_C] register tile: x is read once, y written once, and the mean and
 variance never touch memory. The variance is computed from centred values
 (sum((x - mean)^2)), not E[x^2] - E[x]^2, which cancels badly when |mean| >> std.
+
+Comments that start with `mem:` say where the data lives: registers, shared memory,
+the L1/L2 caches, or DRAM (GDDR6 on a T4, HBM3 on an H100). See memory-hierarchy.md.
 """
 import torch
 import triton
@@ -21,14 +24,19 @@ def layernorm_kernel(x, w, b, y, N, C, eps,
     mask = (rows[:, None] < N) & cmask[None, :]
     offs = rows[:, None].to(tl.int64) * C + cols[None, :]
 
+    # mem: DRAM -> registers, BLOCK_M x BLOCK_C; each element is read once
     v = tl.load(x + offs, mask=mask, other=0.0)
+    # mem: row sums = shuffles in registers (+ shared memory if a row spans warps)
     mean = tl.sum(v, axis=1) / C
     d = tl.where(mask, v - mean[:, None], 0.0)       # zero the padding before squaring
+    # mem: d = x - mean is still in registers, so the centred variance costs no extra DRAM read
     var = tl.sum(d * d, axis=1) / C
     rstd = tl.rsqrt(var + eps)
 
+    # mem: w and b (2 KB) are read by every program: L1/L2 hits
     wv = tl.load(w + cols, mask=cmask)
     bv = tl.load(b + cols, mask=cmask)
+    # mem: registers -> DRAM
     tl.store(y + offs, d * rstd[:, None] * wv[None, :] + bv[None, :], mask=mask)
 
 

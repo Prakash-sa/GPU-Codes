@@ -11,11 +11,16 @@ Each challenge has two files:
   file's top half into LeetGPU unchanged. Its `__main__` block tests awkward sizes and
   benchmarks against PyTorch.
 - **`NN-name.md`**: the explanation. It covers the idea (with a figure where it helps), the
-  code, what bounds the kernel, changes for T4 vs H100, how to benchmark and profile it,
+  code, what bounds the kernel, where its data lives (registers, shared memory, L2, DRAM),
+  changes for T4 vs H100, how to benchmark and profile it,
   what changes at larger scale, and videos and reading.
 
 Start with **[Benchmark, profile, scale](benchmarking.md)**: it is the workflow every page
 uses.
+
+**[Where the data lives](memory-hierarchy.md)** explains registers, shared memory/L1, L2
+and DRAM (HBM). It shows how Triton code maps onto them. Every page has a section
+saying where its own data sits.
 
 ## The problems
 
@@ -50,6 +55,26 @@ python docs/leetgpu/09_gemm.py                      # tests + benchmark on a CUD
 PROFILE=1 python docs/leetgpu/09_gemm.py            # + torch.profiler table and trace
 TRITON_INTERPRET=1 python docs/leetgpu/09_gemm.py   # no GPU: kernels run on the CPU
 ```
+
+!!! warning "On a Mac (or any machine without an NVIDIA GPU)"
+    Triton has no macOS wheels and `ncu`/`nsys` need an NVIDIA GPU, so `pip install triton`
+    fails and nothing above runs natively. Two options:
+
+    - **Check correctness locally** with the CPU interpreter inside a Linux container:
+
+        ```bash
+        docker build -t triton-interp - <<'EOF'
+        FROM python:3.11-slim
+        RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu \
+         && pip install --no-cache-dir triton numpy
+        EOF
+        docker run --rm --platform linux/amd64 -e TRITON_INTERPRET=1 -v "$PWD":/w -w /w \
+            triton-interp python docs/leetgpu/01_vector_add.py
+        ```
+
+        This prints the correctness checks and skips the benchmark.
+    - **Benchmark and profile** on a real GPU: a Colab T4 runtime, LeetGPU Pro, or a cloud
+      VM. On Colab, `!ncu` is usually blocked; use `PROFILE=1` (torch.profiler) there.
 
 !!! info "What has been verified"
     Every solution passes its correctness tests, which include LeetGPU's tolerances and

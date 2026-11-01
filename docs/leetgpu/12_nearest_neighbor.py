@@ -6,6 +6,9 @@ PyTorch builds the full N x N distance matrix (400 MB at N = 10K). This kernel n
 materializes it: a program owns BLOCK_I query points and sweeps the other points in
 tiles of BLOCK_J, keeping a running (best distance, best index) per query in registers.
 Total work O(N^2) arithmetic, O(N) memory traffic: compute bound, not memory bound.
+
+Comments that start with `mem:` say where the data lives: registers, shared memory,
+the L1/L2 caches, or DRAM (GDDR6 on a T4, HBM3 on an H100). See memory-hierarchy.md.
 """
 import torch
 import triton
@@ -16,6 +19,8 @@ import triton.language as tl
 def nearest_kernel(pts, out, N, BLOCK_I: tl.constexpr, BLOCK_J: tl.constexpr):
     i = tl.program_id(0) * BLOCK_I + tl.arange(0, BLOCK_I)
     mi = i < N
+    # mem: DRAM -> registers, this program's BLOCK_I points (stride 3: the y and z
+    # loads hit the same L1 lines)
     xi = tl.load(pts + 3 * i + 0, mask=mi, other=0.0)
     yi = tl.load(pts + 3 * i + 1, mask=mi, other=0.0)
     zi = tl.load(pts + 3 * i + 2, mask=mi, other=0.0)
@@ -25,15 +30,19 @@ def nearest_kernel(pts, out, N, BLOCK_I: tl.constexpr, BLOCK_J: tl.constexpr):
     for start in range(0, N, BLOCK_J):              # tiles in increasing j order
         j = start + tl.arange(0, BLOCK_J)
         mj = j < N
+        # mem: every program sweeps the same 120 KB array, so these are L2/L1 hits.
+        # The 64x128 distance tile lives in registers (32 per thread)
         dx = xi[:, None] - tl.load(pts + 3 * j + 0, mask=mj, other=0.0)[None, :]
         dy = yi[:, None] - tl.load(pts + 3 * j + 1, mask=mj, other=0.0)[None, :]
         dz = zi[:, None] - tl.load(pts + 3 * j + 2, mask=mj, other=0.0)[None, :]
         d = dx * dx + dy * dy + dz * dz
         d = tl.where((i[:, None] == j[None, :]) | (~mj[None, :]), float("inf"), d)
+        # mem: row-wise argmin = shuffles + shared memory; best_d / best_j stay in registers
         tile_d, tile_j = tl.min(d, axis=1, return_indices=True)   # leftmost on ties
         better = tile_d < best_d                    # strict: an earlier tile wins ties
         best_d = tl.where(better, tile_d, best_d)
         best_j = tl.where(better, start + tile_j, best_j)
+    # mem: registers -> DRAM
     tl.store(out + i, best_j, mask=mi)
 
 

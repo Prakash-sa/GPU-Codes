@@ -4,6 +4,9 @@ The starter launches one program per *element* (grid = rows x cols): 42M program
 moving 8 bytes. This version moves a BLOCK x BLOCK tile per program. The tile is read
 row-by-row from `input` (coalesced) and written row-by-row to `output` (coalesced);
 `tl.trans` makes the compiler re-shuffle the tile through shared memory in between.
+
+Comments that start with `mem:` say where the data lives: registers, shared memory,
+the L1/L2 caches, or DRAM (GDDR6 on a T4, HBM3 on an H100). See memory-hierarchy.md.
 """
 import torch
 import triton
@@ -21,10 +24,13 @@ def matrix_transpose_kernel(input, output, rows, cols,
     mask = (r[:, None] < rows) & (c[None, :] < cols)
 
     # [BLOCK_r, BLOCK_c] tile, contiguous along c -> coalesced read
+    # mem: DRAM -> registers, a 64x64 tile (16 floats per thread), coalesced along rows
     tile = tl.load(input + r[:, None] * stride_ir + c[None, :] * stride_ic, mask=mask)
 
     # [BLOCK_c, BLOCK_r] tile, contiguous along r -> coalesced write
     out_ptrs = output + c[:, None] * stride_or + r[None, :] * stride_oc
+    # mem: tl.trans redistributes the tile between threads through shared memory
+    # (~16 KB); the store is then registers -> DRAM, coalesced
     tl.store(out_ptrs, tl.trans(tile), mask=tl.trans(mask))
 
 

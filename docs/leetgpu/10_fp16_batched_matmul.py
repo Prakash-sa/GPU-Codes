@@ -3,6 +3,9 @@
 Each 256^3 matmul is only 64 tiles of 32x32, too small to fill an H100 on its own. One
 launch covers all batches: grid axis 1 is the batch index, so 32 x tiles programs run
 together instead of 32 separate under-filled launches. Batch offsets are int64.
+
+Comments that start with `mem:` say where the data lives: registers, shared memory,
+the L1/L2 caches, or DRAM (GDDR6 on a T4, HBM3 on an H100). See memory-hierarchy.md.
 """
 import os
 
@@ -43,13 +46,16 @@ def bmm_kernel(a, b, c, M, N, K,
 
     acc = tl.zeros([BLOCK_M, BLOCK_N], dtype=tl.float32)
     for k in range(0, K, BLOCK_K):
+        # mem: DRAM -> shared memory, num_stages tiles; one batch's A and B (128 KB each) stay in L2
         a_t = tl.load(a_ptrs, mask=(rm[:, None] < M) & (rk[None, :] + k < K), other=0.0)
         b_t = tl.load(b_ptrs, mask=(rk[:, None] + k < K) & (rn[None, :] < N), other=0.0)
+        # mem: tensor cores; the fp32 accumulator is in registers
         acc = tl.dot(a_t, b_t, acc)
         a_ptrs += BLOCK_K
         b_ptrs += BLOCK_K * N
 
     mask = (rm[:, None] < M) & (rn[None, :] < N)
+    # mem: registers -> DRAM, written once
     tl.store(c + rm[:, None] * N + rn[None, :], acc.to(c.dtype.element_ty), mask=mask)
 
 

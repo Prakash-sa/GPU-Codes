@@ -36,6 +36,20 @@ Bytes = $2 \cdot 4N$ = 33.6 MB.
 - The FP16 variant on LeetGPU (*FP16 Dot Product*) should still **accumulate in FP32**.
   An FP16 accumulator loses everything past ~2048 terms (11-bit mantissa).
 
+## Where the data lives
+
+Levels as in [Where the data lives](memory-hierarchy.md). DRAM is GDDR6 on the T4 and HBM3 on the H100.
+
+| Level | In this kernel |
+|---|---|
+| Registers | `acc` (16 floats per thread) and the two loaded blocks. The product `a * b` exists only in registers: it is never stored |
+| Shared memory | only the final `tl.sum` across warps |
+| L2 | the float64 partials, between the two kernels |
+| DRAM | read A and B once: 32 MB |
+
+Fusing the multiply into the reduction is a register-level fusion: an unfused
+`torch.sum(a * b)` writes and re-reads a 16 MB temporary in DRAM.
+
 ## T4 vs H100
 
 Same as 03: `P = 4 × SMs` adapts automatically. On H100, try BLOCK = 8192 with

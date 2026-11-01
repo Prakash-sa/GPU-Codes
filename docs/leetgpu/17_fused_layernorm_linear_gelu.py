@@ -17,6 +17,9 @@ the raw, offset x and cancels to garbage at this tolerance. Normalize first, the
 Precision: FP32 operands on TF32 tensor cores lose ~3 decimal digits; "tf32x3" recovers
 near-FP32 accuracy for the 1e-3 tolerance at roughly 3x the TF32 cost. On T4 (no TF32)
 _dot_precision() picks "ieee" instead.
+
+Comments that start with `mem:` say where the data lives: registers, shared memory,
+the L1/L2 caches, or DRAM (GDDR6 on a T4, HBM3 on an H100). See memory-hierarchy.md.
 """
 import os
 
@@ -40,11 +43,13 @@ def row_stats_kernel(x, mean, rstd, K, eps, BLOCK: tl.constexpr):
     acc = tl.zeros([BLOCK], dtype=tl.float32)
     for start in range(0, K, BLOCK):
         cols = start + tl.arange(0, BLOCK)
+        # mem: pass 1, DRAM -> registers one chunk at a time
         acc += tl.load(x + row + cols, mask=cols < K, other=0.0)
     mu = tl.sum(acc, axis=0) / K
     acc = tl.zeros([BLOCK], dtype=tl.float32)
     for start in range(0, K, BLOCK):                 # second pass hits L2 (row <= 32 KB)
         cols = start + tl.arange(0, BLOCK)
+        # mem: pass 2 re-reads the row (16 KB at K = 4096): L1/L2 hit
         d = tl.where(cols < K, tl.load(x + row + cols, mask=cols < K, other=0.0) - mu, 0.0)
         acc += d * d
     tl.store(mean + tl.program_id(0), mu)
@@ -69,6 +74,7 @@ def ln_gemm_gelu_kernel(x, mean, rstd, gamma, beta, w, bias, y, M, N, K,
     rn = pid_n * BLOCK_N + tl.arange(0, BLOCK_N)
     rk = tl.arange(0, BLOCK_K)
     mmask = rm < M
+    # mem: row stats, 2 floats per row, from L2
     mu = tl.load(mean + rm, mask=mmask, other=0.0)
     rs = tl.load(rstd + rm, mask=mmask, other=0.0)
 
@@ -77,17 +83,24 @@ def ln_gemm_gelu_kernel(x, mean, rstd, gamma, beta, w, bias, y, M, N, K,
         k = k0 + rk
         kmask = k < K
         amask = mmask[:, None] & kmask[None, :]
+        # mem: x tile: DRAM -> shared memory -> registers, normalized here, then back into
+        # the dot operand layout. xn never exists in DRAM
         xt = tl.load(x + rm[:, None].to(tl.int64) * K + k[None, :], mask=amask, other=0.0)
+        # mem: gamma/beta slices are tiny and read by every program: L1/L2
         g = tl.load(gamma + k, mask=kmask, other=0.0)
         bt = tl.load(beta + k, mask=kmask, other=0.0)
         a = (xt - mu[:, None]) * rs[:, None] * g[None, :] + bt[None, :]
         a = tl.where(amask, a, 0.0)                  # padding must be 0, not (0 - mu) * ...
+        # mem: W tile: DRAM -> shared memory (num_stages buffers); panels reused from L2
         wt = tl.load(w + k[:, None].to(tl.int64) * N + rn[None, :],
                      mask=kmask[:, None] & (rn[None, :] < N), other=0.0)
+        # mem: tensor cores; the fp32 accumulator is in registers
         acc = tl.dot(a, wt, acc, input_precision=PREC)
 
+    # mem: epilogue in registers: bias + GELU. h never exists in DRAM
     h = acc + tl.load(bias + rn, mask=rn < N, other=0.0)[None, :]
     out = 0.5 * h * (1.0 + tl.erf(h * 0.7071067811865476))
+    # mem: registers -> DRAM, written once
     tl.store(y + rm[:, None].to(tl.int64) * N + rn[None, :], out,
              mask=mmask[:, None] & (rn[None, :] < N))
 

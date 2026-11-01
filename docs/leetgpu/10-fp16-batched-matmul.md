@@ -33,6 +33,17 @@ FLOPs = $2 \cdot 32 \cdot 256^3$ = 1.07 GFLOP; bytes = 12.6 MB.
 | Floor | ~39 µs (memory: 12.6 MB at 320 GB/s; compute alone is 16 µs) | ~4 µs (memory: 12.6 MB at 3.35 TB/s) |
 | Programs at 64×64 tiles | 512: 12.8 per SM ✓ | 512: 3.9 per SM, still OK |
 
+## Where the data lives
+
+Levels as in [Where the data lives](memory-hierarchy.md). DRAM is GDDR6 on the T4 and HBM3 on the H100.
+
+| Level | In this kernel |
+|---|---|
+| Registers | the fp32 accumulator per tile, as in [09](09-gemm.md) |
+| Shared memory | A and B tiles per stage: 64×64×32 in fp16 is 8 KB per stage |
+| L2 | one batch's A and B are 128 KB each at 256³. All 32 batches (A, B, C) total 12 MB: that fits the H100's L2 but not the T4's 4 MB, so on a T4 the re-reads of a batch's panels must happen while they are still cached |
+| DRAM | A, B read and C written once: 12 MB |
+
 ## T4 vs H100
 
 | | T4 | H100 |

@@ -40,6 +40,20 @@ Bytes = read x, dy + write dx ≈ 805 MB (the γ, mean and rstd reads are tiny).
 | Floor | 2.5 ms | 0.24 ms |
 | Launches | 3 (main + 2 column sums) | 3: fold the two column sums into one launch with a 2-D grid if launch time shows up |
 
+## Where the data lives
+
+Levels as in [Where the data lives](memory-hierarchy.md). DRAM is GDDR6 on the T4 and HBM3 on the H100.
+
+| Level | In this kernel |
+|---|---|
+| Registers | `γ` (once per program), the row of x and dy, and **two** column accumulators (dγ, dβ): five C-wide vectors. `mean[row]` and `rstd[row]` are scalars |
+| Shared memory | the two row sums per row (`mean(g)` and `mean(g · x̂)`) across warps |
+| L2 | the `[2, P, C]` partials (≤ 8.6 MB on an H100) and the per-row mean/rstd |
+| DRAM | read x and dy, write dx: 805 MB at 16384 × 4096 |
+
+The saved `mean` and `rstd` are N floats each (64 KB). Reading them is far cheaper than
+recomputing them, which would take another full pass over x.
+
 ## T4 vs H100
 
 Same as page 19:

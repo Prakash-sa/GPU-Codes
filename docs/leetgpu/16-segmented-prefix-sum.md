@@ -52,6 +52,21 @@ Traffic: phase 1 reads values + flags (8 B/elem), phase 3 reads them again and w
 | Floor (1 GB) | 3.1 ms | 0.30 ms |
 | FP64 scan work (~25 adds/elem × 2 passes ≈ 2.5 GFLOP) | **~10 ms at 0.25 TFLOP/s: compute bound!** | < 0.1 ms at 34 TFLOP/s |
 
+## Where the data lives
+
+Levels as in [Where the data lives](memory-hierarchy.md). DRAM is GDDR6 on the T4 and HBM3 on the H100.
+
+| Level | In this kernel |
+|---|---|
+| Registers | each program's 4,096 values, widened to **float64** for the scan (16 doubles per thread), and their flags |
+| Shared memory | `tl.associative_scan` across warps; the shuffles inside each warp use registers |
+| L1 | the shifted `values[offs − 1]` load reuses the cache lines of the main load |
+| L2 | the per-block aggregates and carries (~12K blocks × 20 B), written and read between the three kernels |
+| DRAM | values and flags read twice (aggregate pass and scan pass), output written once: ~1 GB at N = 50M. That is far more than L2, so the second read really goes to DRAM |
+
+A single-pass scan with decoupled look-back reads the input once. It would cut ~40% of
+the traffic, at the cost of a much trickier kernel.
+
 ## T4 vs H100
 
 | | T4 | H100 |

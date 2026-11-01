@@ -6,6 +6,9 @@ Two deterministic passes, no atomics:
      writes one partial.
   2. One program adds the P partials in float64.
 Same inputs -> same bits every run, which floating-point atomics cannot promise.
+
+Comments that start with `mem:` say where the data lives: registers, shared memory,
+the L1/L2 caches, or DRAM (GDDR6 on a T4, HBM3 on an H100). See memory-hierarchy.md.
 """
 import torch
 import triton
@@ -19,13 +22,16 @@ def partial_sum_kernel(x, partials, N, BLOCK: tl.constexpr):
     acc = tl.zeros([BLOCK], dtype=tl.float32)
     for start in range(pid * BLOCK, N, nprog * BLOCK):      # grid-stride loop
         offs = start + tl.arange(0, BLOCK)
+        # mem: DRAM -> registers; acc (16 floats per thread) stays in registers for the whole loop
         acc += tl.load(x + offs, mask=offs < N, other=0.0)
+    # mem: tl.sum = warp shuffles, then shared memory across warps; one float64 -> L2
     tl.store(partials + pid, tl.sum(acc.to(tl.float64), axis=0))
 
 
 @triton.jit
 def final_sum_kernel(partials, out, P, BLOCK_P: tl.constexpr):
     offs = tl.arange(0, BLOCK_P)
+    # mem: the P partials were just written, so they come back from L2, not DRAM
     p = tl.load(partials + offs, mask=offs < P, other=0.0)
     tl.store(out, tl.sum(p, axis=0).to(tl.float32))
 

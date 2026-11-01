@@ -2,6 +2,9 @@
 
 Bandwidth bound: 12 bytes moved per FLOP. One program per BLOCK_SIZE elements,
 contiguous offsets so every load/store is fully coalesced.
+
+Comments that start with `mem:` say where the data lives: registers, shared memory,
+the L1/L2 caches, or DRAM (GDDR6 on a T4, HBM3 on an H100). See memory-hierarchy.md.
 """
 import torch
 import triton
@@ -13,8 +16,10 @@ def vector_add_kernel(a, b, c, n_elements, BLOCK_SIZE: tl.constexpr):
     pid = tl.program_id(0)
     offs = pid * BLOCK_SIZE + tl.arange(0, BLOCK_SIZE)
     mask = offs < n_elements                      # the last block is usually partial
+    # mem: DRAM -> L2 -> registers, 1,024 floats per program (8 per thread). Read once, no reuse
     x = tl.load(a + offs, mask=mask)
     y = tl.load(b + offs, mask=mask)
+    # mem: x + y exists only in registers; registers -> L2 -> DRAM
     tl.store(c + offs, x + y, mask=mask)
 
 

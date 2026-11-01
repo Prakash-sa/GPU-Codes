@@ -45,6 +45,22 @@ FLOPs = $2MNK$ = 2.15 GFLOP; bytes ≈ 8 MB, so intensity is ≈ 270 FLOP/byte: 
 
 `torch.addmm` (cuBLAS) is the baseline. Matching it within ~10–20% is a good result.
 
+## Where the data lives
+
+Levels as in [Where the data lives](memory-hierarchy.md). DRAM is GDDR6 on the T4 and HBM3 on the H100.
+
+| Level | In this kernel |
+|---|---|
+| Registers | the fp32 accumulator, `BLOCK_M × BLOCK_N`. At 128 × 128 with 8 warps that is 64 registers per thread. The `alpha·acc + beta·C` epilogue also runs here, before the single store |
+| Shared memory | the A and B tiles for each K step, one buffer per stage: (128×32 + 32×128) × 2 bytes = 16 KB per stage, so 48 KB at 3 stages. The 128×256×64 config needs 48 KB per stage (144 KB at 3 stages): it only fits an H100 |
+| Tensor cores | read the tiles from shared memory (`wgmma` on H100) or from registers loaded with `ldmatrix` (T4) |
+| L2 | each A row-panel is read by every program in its row, and each B column-panel by every program in its column. **Grouped ordering** (`GROUP_M=8`) schedules programs that share panels together, so the repeats hit L2 instead of DRAM |
+| DRAM | ideally A, B and C read once and C written once: 8 MB at 1024³ |
+
+A GEMM is fast only when the hierarchy is used at every level: L2 for panel reuse,
+shared memory for tile reuse across a program's warps, and registers for the
+accumulator.
+
 ## T4 vs H100
 
 | | T4 (sm_75) | H100 (sm_90) |

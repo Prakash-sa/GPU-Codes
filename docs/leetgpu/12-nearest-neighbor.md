@@ -43,6 +43,20 @@ re-read from L1/L2).
 | FP32 floor | 0.11 ms | 13 µs |
 | vs PyTorch reference | avoids 400 MB of traffic and 5+ kernels: large speedup | same |
 
+## Where the data lives
+
+Levels as in [Where the data lives](memory-hierarchy.md). DRAM is GDDR6 on the T4 and HBM3 on the H100.
+
+| Level | In this kernel |
+|---|---|
+| Registers | the program's `BLOCK_I` points, the 64 × 128 distance tile (32 floats per thread), and the running best distance and index |
+| Shared memory | the cross-thread step of `tl.min(..., return_indices=True)` along each row |
+| L1 / L2 | the point array is 10K × 3 × 4 = 120 KB. Every program sweeps all of it, so after the first touch it is served from L2, and much of it from L1. The x, y and z loads are stride-3, but they hit the same cache lines, so the y and z loads come from L1 |
+| DRAM | ~120 KB in and 40 KB out. Effectively nothing |
+
+With the data in cache, all-pairs work makes this compute bound. The distance math in
+registers is the cost.
+
 ## T4 vs H100
 
 | | T4 | H100 |

@@ -78,6 +78,7 @@ nav:
   - LeetGPU solutions (Triton):
       - Overview: leetgpu/index.md
       - Benchmark, profile, scale: leetgpu/benchmarking.md
+      - Where the data lives: leetgpu/memory-hierarchy.md
       - 01. Vector addition: leetgpu/01-vector-add.md
       - 02. Matrix transpose: leetgpu/02-matrix-transpose.md
       - 03. Reduction: leetgpu/03-reduction.md

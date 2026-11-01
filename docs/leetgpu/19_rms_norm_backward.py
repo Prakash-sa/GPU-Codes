@@ -12,6 +12,9 @@ The two reductions go in different directions. That is the whole difficulty.
   * Kernel 2 sums the P partial rows per column.
 No atomics, so the result is deterministic. Extra traffic: P x C floats, ~2 MB for
 P = 132, against 768 MB of x/dy/dx.
+
+Comments that start with `mem:` say where the data lives: registers, shared memory,
+the L1/L2 caches, or DRAM (GDDR6 on a T4, HBM3 on an H100). See memory-hierarchy.md.
 """
 import torch
 import triton
@@ -24,18 +27,24 @@ def rmsnorm_bwd_kernel(x, w, dy, dx, dw_part, N, C, eps, BLOCK_C: tl.constexpr):
     P = tl.num_programs(0)
     cols = tl.arange(0, BLOCK_C)
     cmask = cols < C
+    # mem: w: DRAM -> registers once per program, reused for all of its rows
     wv = tl.load(w + cols, mask=cmask, other=0.0)
     dw_acc = tl.zeros([BLOCK_C], dtype=tl.float32)
     for row in range(pid, N, P):
         off = row * C                               # N*C <= 2^30: int32 is safe here
+        # mem: one row of x and dy: DRAM -> registers, read exactly once
         xv = tl.load(x + off + cols, mask=cmask, other=0.0)
         dyv = tl.load(dy + off + cols, mask=cmask, other=0.0)
+        # mem: row sums = shuffles + shared memory across warps
         rstd = tl.rsqrt(tl.sum(xv * xv, axis=0) / C + eps)
         xhat = xv * rstd
         g = dyv * wv
         proj = tl.sum(g * xhat, axis=0) / C
+        # mem: registers -> DRAM
         tl.store(dx + off + cols, rstd * (g - xhat * proj), mask=cmask)
         dw_acc += dyv * xhat
+    # mem: dw_acc stayed in registers across all of this program's rows. One row of
+    # partials -> L2 ([P, C] is 1-4 MB; column_sum_kernel reads it from L2)
     tl.store(dw_part + pid.to(tl.int64) * C + cols, dw_acc, mask=cmask)
 
 
@@ -46,6 +55,7 @@ def column_sum_kernel(part, out, P, C, BLOCK_P: tl.constexpr, BLOCK_C: tl.conste
     acc = tl.zeros([BLOCK_C], dtype=tl.float32)
     for p0 in range(0, P, BLOCK_P):
         p = p0 + tl.arange(0, BLOCK_P)
+        # mem: partials from L2; the column sums accumulate in registers
         tile = tl.load(part + p[:, None] * C + cols[None, :],
                        mask=(p[:, None] < P) & cmask[None, :], other=0.0)
         acc += tl.sum(tile, axis=0)

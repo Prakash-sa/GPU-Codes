@@ -47,6 +47,17 @@ ops, which is small next to the GEMM.
 | Floor | 137 / 8.1 ≈ **17 ms** | 3 × 137 / 495 ≈ 0.83 ms |
 | Plain TF32 (if the tolerance allowed it) | n/a | ≈ 0.28 ms |
 
+## Where the data lives
+
+Levels as in [Where the data lives](memory-hierarchy.md). DRAM is GDDR6 on the T4 and HBM3 on the H100.
+
+| Level | In this kernel |
+|---|---|
+| Registers | the normalized x tile (`(x − mu) · rstd · γ + β`) between the load and `tl.dot`; the fp32 accumulator; bias plus GELU before the store. `xn` and `h` never leave registers |
+| Shared memory | W and x tiles per stage, fp32: up to 32 KB per stage. x is modified in registers before the dot, so it can't go straight from the async copy into the tensor cores. It makes an extra trip from shared memory to registers and back |
+| L2 | `mean` and `rstd` (32 KB) and the x and W panels reused across programs, helped by `GROUP_M` |
+| DRAM | stats kernel: x read (the second, centred pass mostly hits L1/L2). GEMM: x, W read, y written: ~200 MB at 4096³ with ideal reuse |
+
 ## T4 vs H100
 
 | | T4 | H100 |

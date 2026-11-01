@@ -42,6 +42,20 @@ $N^2$ = 67M interactions × ~20 FLOPs ≈ 1.3 GFLOP.
 | FP32 floor | 0.17 ms | 20 µs |
 | PyTorch reference (chunked, materializes [N, 1024, 3]) | many kernels, GBs of temporaries | same |
 
+## Where the data lives
+
+Levels as in [Where the data lives](memory-hierarchy.md). DRAM is GDDR6 on the T4 and HBM3 on the H100.
+
+| Level | In this kernel |
+|---|---|
+| Registers | the `BLOCK_I` positions, the three force accumulators `fx, fy, fz`, and the 64 × 64 tile of displacements and `s` |
+| Shared memory | the `tl.sum(axis=1)` across the tile's columns |
+| L1 / L2 | positions and masses are 8192 × 16 B = 128 KB, read by every program: served from L2 and L1 after the first program |
+| DRAM | ~128 KB in, 96 KB out |
+
+As in [12](12-nearest-neighbor.md), the classic CUDA version stages each j-tile in
+shared memory by hand. Triton relies on L1 for that reuse, and at this size it works.
+
 ## T4 vs H100
 
 | | T4 | H100 |

@@ -39,6 +39,21 @@ Bytes = read + write = $2 \cdot 4 \cdot 7000 \cdot 6000$ = 336 MB.
 A good transpose reaches roughly the same GB/s as a plain copy (`output.copy_(input)`).
 That copy is the right baseline to compare against.
 
+## Where the data lives
+
+Levels as in [Where the data lives](memory-hierarchy.md). DRAM is GDDR6 on the T4 and HBM3 on the H100.
+
+| Level | In this kernel |
+|---|---|
+| Registers | the 64 × 64 tile: 4,096 floats over 256 threads (`num_warps=8`), 16 per thread |
+| Shared memory | `tl.trans` changes which thread owns which element. The compiler does that by writing the tile to shared memory in one layout and reading it back in the other: ~16 KB per program |
+| L2 | each load and store is a full 32-byte sector, so L2 just passes the data along |
+| DRAM | read the input once, write the output once: 336 MB at 7000 × 6000 |
+
+This is the classic reason shared memory exists. It turns a strided global write into
+an on-chip shuffle plus a coalesced write. In CUDA you write that buffer yourself (with
+padding against bank conflicts). In Triton, `tl.trans` asks the compiler for it.
+
 ## T4 vs H100
 
 | | T4 | H100 |

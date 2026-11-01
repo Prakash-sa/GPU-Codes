@@ -13,6 +13,9 @@ also split N across programs and merge the partial (m, l, acc) at the end
 
 Both dots use "tf32x3" on Ampere/Hopper for FP32-level accuracy and "ieee" on T4, which
 has no TF32 tensor cores (see _dot_precision).
+
+Comments that start with `mem:` say where the data lives: registers, shared memory,
+the L1/L2 caches, or DRAM (GDDR6 on a T4, HBM3 on an H100). See memory-hierarchy.md.
 """
 import math
 import os
@@ -38,8 +41,10 @@ def attention_kernel(q, k, v, out, M, N, d, qk_scale,
     rm = tl.program_id(0) * BLOCK_M + tl.arange(0, BLOCK_M)
     rd = tl.arange(0, BLOCK_D)
     dmask = rd < d
+    # mem: Q tile: DRAM -> registers, loaded once and reused for every K/V block
     qt = tl.load(q + rm[:, None] * d + rd[None, :], mask=(rm[:, None] < M) & dmask[None, :], other=0.0)
 
+    # mem: m_i, l_i and acc are the softmax state: registers for the whole loop
     m_i = tl.full([BLOCK_M], -float("inf"), tl.float32)
     l_i = tl.zeros([BLOCK_M], dtype=tl.float32)
     acc = tl.zeros([BLOCK_M, BLOCK_D], dtype=tl.float32)
@@ -47,18 +52,24 @@ def attention_kernel(q, k, v, out, M, N, d, qk_scale,
         rn = start + tl.arange(0, BLOCK_N)
         nmask = rn < N
         kv_mask = nmask[:, None] & dmask[None, :]
+        # mem: K and V tiles -> shared memory for tl.dot. Every program reads all of K and V
+        # (128 KB each), so after the first program they come from L2
         kt = tl.load(k + rn[:, None] * d + rd[None, :], mask=kv_mask, other=0.0)
         vt = tl.load(v + rn[:, None] * d + rd[None, :], mask=kv_mask, other=0.0)
 
+        # mem: s and p (BLOCK_M x BLOCK_N scores) exist only here, in registers.
+        # The full M x N score matrix is never written to DRAM
         s = tl.dot(qt, tl.trans(kt), input_precision=PREC) * qk_scale   # log2 domain
         s = tl.where(nmask[None, :], s, -float("inf"))
         m_new = tl.maximum(m_i, tl.max(s, axis=1))
         p = tl.exp2(s - m_new[:, None])
         alpha = tl.exp2(m_i - m_new)                 # rescale the old partial results
         l_i = l_i * alpha + tl.sum(p, axis=1)
+        # mem: p goes registers -> dot operand layout -> tensor cores
         acc = acc * alpha[:, None] + tl.dot(p, vt, input_precision=PREC)
         m_i = m_new
 
+    # mem: registers -> DRAM, written once
     tl.store(out + rm[:, None] * d + rd[None, :], acc / l_i[:, None],
              mask=(rm[:, None] < M) & dmask[None, :])
 

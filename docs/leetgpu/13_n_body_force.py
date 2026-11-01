@@ -9,6 +9,9 @@ bodies in tiles of BLOCK_J, and accumulates (Fx, Fy, Fz) in registers. Each j-ti
 is reused BLOCK_I times. The math is reshaped for the GPU:
     (r^2)^(-3/2) = rsqrt(r^2)^3    -> one rsqrt plus two multiplies, no pow, no divide.
 About 20 FLOPs per pair, 67M pairs at N = 8192: compute bound.
+
+Comments that start with `mem:` say where the data lives: registers, shared memory,
+the L1/L2 caches, or DRAM (GDDR6 on a T4, HBM3 on an H100). See memory-hierarchy.md.
 """
 import torch
 import triton
@@ -21,9 +24,11 @@ EPS = 1e-3
 def nbody_kernel(pos, mass, force, N, eps2, BLOCK_I: tl.constexpr, BLOCK_J: tl.constexpr):
     i = tl.program_id(0) * BLOCK_I + tl.arange(0, BLOCK_I)
     mi = i < N
+    # mem: DRAM -> registers, BLOCK_I positions kept for the whole j loop
     xi = tl.load(pos + 3 * i + 0, mask=mi, other=0.0)
     yi = tl.load(pos + 3 * i + 1, mask=mi, other=0.0)
     zi = tl.load(pos + 3 * i + 2, mask=mi, other=0.0)
+    # mem: the force accumulators live in registers across all j tiles
     fx = tl.zeros([BLOCK_I], dtype=tl.float32)
     fy = tl.zeros([BLOCK_I], dtype=tl.float32)
     fz = tl.zeros([BLOCK_I], dtype=tl.float32)
@@ -31,16 +36,19 @@ def nbody_kernel(pos, mass, force, N, eps2, BLOCK_I: tl.constexpr, BLOCK_J: tl.c
     for start in range(0, N, BLOCK_J):
         j = start + tl.arange(0, BLOCK_J)
         mj = j < N
+        # mem: pos and mass (128 KB) are read by every program: L2/L1 hits, not DRAM
         rx = tl.load(pos + 3 * j + 0, mask=mj, other=0.0)[None, :] - xi[:, None]
         ry = tl.load(pos + 3 * j + 1, mask=mj, other=0.0)[None, :] - yi[:, None]
         rz = tl.load(pos + 3 * j + 2, mask=mj, other=0.0)[None, :] - zi[:, None]
         mj_val = tl.load(mass + j, mask=mj, other=0.0)          # padded bodies weigh 0
         inv = tl.rsqrt(rx * rx + ry * ry + rz * rz + eps2)
         s = mj_val[None, :] * (inv * inv * inv)
+        # mem: sums across the tile = shuffles + shared memory
         fx += tl.sum(s * rx, axis=1)
         fy += tl.sum(s * ry, axis=1)
         fz += tl.sum(s * rz, axis=1)
 
+    # mem: registers -> DRAM, once per point
     tl.store(force + 3 * i + 0, fx, mask=mi)
     tl.store(force + 3 * i + 1, fy, mask=mi)
     tl.store(force + 3 * i + 2, fz, mask=mi)

@@ -9,6 +9,9 @@
 Same structure as 19_rms_norm_backward.py, with one more row statistic (mean(g)) and
 two column accumulators per program (dgamma and dbeta partials) in a [2, P, C] buffer,
 finished by one column-sum launch for each. Deterministic, no atomics.
+
+Comments that start with `mem:` say where the data lives: registers, shared memory,
+the L1/L2 caches, or DRAM (GDDR6 on a T4, HBM3 on an H100). See memory-hierarchy.md.
 """
 import torch
 import triton
@@ -21,23 +24,30 @@ def layernorm_bwd_kernel(x, gamma, mean, rstd, dy, dx, part, N, C, BLOCK_C: tl.c
     P = tl.num_programs(0)
     cols = tl.arange(0, BLOCK_C)
     cmask = cols < C
+    # mem: gamma: DRAM -> registers once per program, reused for all of its rows
     gv = tl.load(gamma + cols, mask=cmask, other=0.0)
+    # mem: two column accumulators (dgamma, dbeta) in registers across the rows
     dg_acc = tl.zeros([BLOCK_C], dtype=tl.float32)
     db_acc = tl.zeros([BLOCK_C], dtype=tl.float32)
     for row in range(pid, N, P):
         off = row * C                               # N*C <= 2^30: int32 is safe here
+        # mem: the saved mean/rstd: one scalar each per row, cheaper than recomputing
         mu = tl.load(mean + row)
         rs = tl.load(rstd + row)
+        # mem: one row of x and dy: DRAM -> registers, read exactly once
         xv = tl.load(x + off + cols, mask=cmask, other=0.0)
         dyv = tl.load(dy + off + cols, mask=cmask, other=0.0)
         xhat = tl.where(cmask, (xv - mu) * rs, 0.0)
         g = dyv * gv
+        # mem: row sums = shuffles + shared memory across warps
         mean_g = tl.sum(g, axis=0) / C
         proj = tl.sum(g * xhat, axis=0) / C
+        # mem: registers -> DRAM
         tl.store(dx + off + cols, rs * (g - mean_g - xhat * proj), mask=cmask)
         dg_acc += dyv * xhat
         db_acc += dyv
     base = pid.to(tl.int64) * C + cols
+    # mem: one row of each partial -> L2 ([2, P, C] <= 8.6 MB, read back from L2)
     tl.store(part + base, dg_acc, mask=cmask)                 # part[0, pid, :]
     tl.store(part + P * C + base, db_acc, mask=cmask)         # part[1, pid, :]
 
@@ -49,6 +59,7 @@ def column_sum_kernel(part, out, P, C, BLOCK_P: tl.constexpr, BLOCK_C: tl.conste
     acc = tl.zeros([BLOCK_C], dtype=tl.float32)
     for p0 in range(0, P, BLOCK_P):
         p = p0 + tl.arange(0, BLOCK_P)
+        # mem: partials from L2; the column sums accumulate in registers
         tile = tl.load(part + p[:, None] * C + cols[None, :],
                        mask=(p[:, None] < P) & cmask[None, :], other=0.0)
         acc += tl.sum(tile, axis=0)
