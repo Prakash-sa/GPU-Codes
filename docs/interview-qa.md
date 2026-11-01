@@ -394,6 +394,39 @@ thing, then re-measure. Say the bytes and FLOPs out loud.
     Keep data on the GPU, fuse, and match each communication pattern to the fastest link
     that can carry it. See [where data should move](notes/10-multi-gpu-communication.md#where-data-should-move-and-where-not).
 
+??? question "What is NUMA, and why does it matter on a GPU server?"
+    On a multi-socket server, each CPU socket has its own memory and its own PCIe root
+    complex. Memory on another socket is reached over UPI or Infinity Fabric: slower,
+    with higher latency and shared bandwidth. Each GPU and NIC hangs off one socket, its
+    NUMA node.
+
+    If a rank's pinned buffers, launch thread or DataLoader workers sit on the other node,
+    every host-to-device copy and every CPU step crosses the socket link. A NIC on the
+    wrong socket can also disable GPUDirect RDMA. GPU-to-GPU traffic over NVLink is not
+    affected. See [NUMA](notes/10-multi-gpu-communication.md#numa-the-cpu-side-of-the-topology).
+
+??? question "Host-to-device bandwidth is fine on GPUs 0–3 but low and noisy on 4–7. Why?"
+    Most likely NUMA. The process (or its pinned buffers) lives on socket 0, but GPUs 4–7
+    are attached to socket 1, so those copies cross the socket link. Pages are placed on
+    first touch, by whichever CPU first wrote them. To check and fix:
+
+    1. `nvidia-smi topo -m` shows each GPU's NUMA affinity.
+    2. Run one process per GPU, bound to that GPU's node *before* it allocates
+       (`numactl --cpunodebind=N --membind=N`, `srun --gpu-bind=closest`, or
+       `mpirun --bind-to numa`).
+    3. Re-measure.
+
+??? question "How do you bind distributed ranks to the right CPUs?"
+    One rank per GPU, each bound to the cores and memory of its GPU's NUMA node, using
+    the NIC on the same socket. Options:
+
+    - Slurm: `--gpus-per-task=1 --gpu-bind=closest --cpu-bind=cores`.
+    - Open MPI: `--map-by ppr:4:numa --bind-to numa`.
+    - torchrun: a wrapper that runs each rank under `numactl` for the GPU's node.
+
+    DataLoader workers inherit the binding. Check with `numactl --show` or `taskset -p`
+    inside a rank.
+
 ## NVIDIA vs AMD
 
 ??? question "What changes when you port a CUDA kernel to AMD?"

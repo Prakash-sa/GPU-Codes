@@ -19,7 +19,7 @@ GPU stacks) and a GPU hardware reference sheet.
 | [7. GPU from Python](docs/notes/07-python.md) | CuPy, Numba, Triton, PyTorch |
 | [8. Programming with Triton](docs/notes/08-triton.md) | Triton kernels: vector add, fused softmax, stencils, autotuned matmul, debugging |
 | [9. Optimization strategies](docs/notes/09-optimization-strategies.md) | Bottleneck diagnosis and fixes for memory-, latency-, compute- and launch-bound code, multi-GPU |
-| [10. How GPUs talk to each other](docs/notes/10-multi-gpu-communication.md) | NVLink, NVSwitch, PCIe, InfiniBand, Infinity Fabric; NCCL, RCCL, MPI, NVSHMEM; NVIDIA vs AMD; where data should and shouldn't move |
+| [10. How GPUs talk to each other](docs/notes/10-multi-gpu-communication.md) | NVLink, NVSwitch, PCIe, InfiniBand, Infinity Fabric, NUMA; NCCL, RCCL, MPI, NVSHMEM; NVIDIA vs AMD; where data should and shouldn't move |
 | [Interview Q&A](docs/interview-qa.md) | GPU, ML-systems and multi-GPU interview questions with short answers |
 | [Cheat sheet](docs/notes/cheatsheet.md) | Quick reference of APIs, limits and formulas |
 | [LeetGPU solutions (Triton)](docs/leetgpu/index.md) | 20 challenges: one `.py` (kernel + `solve()` + tests) and one `.md` (explanation, T4 vs H100, profiling, scaling, videos) each. See also [benchmark, profile, scale](docs/leetgpu/benchmarking.md) |

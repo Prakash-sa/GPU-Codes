@@ -174,7 +174,43 @@ def data_paths():
     save(fig, "data-paths.png")
 
 
+# ---------------------------------------------------------------- NUMA
+
+def numa_node():
+    fig, ax = canvas(15, 8.6, (0, 30), (0, 17.2))
+    ax.text(0.3, 16.5, "A dual-socket GPU server is two NUMA nodes", fontsize=14, weight="bold")
+    for k, x0 in enumerate((0.4, 15.4)):
+        box(ax, x0, 3.6, 14.2, 12.2, "none", GRAY, lw=1.2, ls="--")
+        ax.text(x0 + 0.3, 15.2, f"NUMA node {k}  (socket {k})", fontsize=10.5, color=GRAY, weight="bold")
+        ddr_x, cpu_x = (x0 + 0.6, x0 + 5.6) if k == 0 else (x0 + 9.2, x0 + 3.6)
+        label_box(ax, ddr_x, 12.2, 4.4, 2.2, BLUE_L, BLUE, "DDR memory", "local to this socket", fs=10)
+        label_box(ax, cpu_x, 12.2, 5.0, 2.2, GRAY_L, GRAY, f"CPU {k}", "cores + memory controllers", fs=10)
+        link(ax, (min(ddr_x, cpu_x) + (4.4 if k == 0 else 5.0), 13.3), (max(ddr_x, cpu_x), 13.3), BLUE, 4)
+        rc = cpu_x + 2.5
+        label_box(ax, cpu_x, 8.9, 5.0, 1.3, AMBER_L, AMBER, "PCIe root complex", fs=9.5)
+        link(ax, (rc, 10.2), (rc, 12.2), AMBER, 3)
+        for j in range(4):
+            gx = x0 + 0.5 + j * 2.75
+            label_box(ax, gx, 4.3, 2.3, 1.6, TEAL_L, TEAL, f"GPU{4 * k + j}", fs=9.5)
+            link(ax, (gx + 1.15, 5.9), (rc, 8.9), AMBER, 1.6)
+        label_box(ax, x0 + 11.4, 6.6, 2.4, 1.4, PURPLE_L, PURPLE, "NIC", fs=9.5)
+        link(ax, (x0 + 12.6, 8.0), (cpu_x + 5.0, 9.5), AMBER, 1.6)
+    link(ax, (11.0, 13.3), (19.0, 13.3), RED, 4)
+    ax.text(17.2, 14.4, "UPI / Infinity Fabric\nbetween sockets", ha="center", fontsize=9.5, color=RED, weight="bold")
+    ax.text(17.2, 12.6, "shared, slower,\nextra latency", ha="center", fontsize=9, color=RED, va="top")
+    notes = [
+        (TEAL, "Local:  GPU0 <-> pinned buffer in node 0's DDR. One PCIe hop."),
+        (RED, "Remote: GPU0 <-> buffer in node 1's DDR. PCIe + the socket link, which every remote access shares."),
+        (RED, "Remote: GPU0 -> NIC on socket 1 (GPUDirect RDMA across sockets is slow or disabled)."),
+    ]
+    for i, (c, t) in enumerate(notes):
+        ax.text(0.5, 2.7 - i * 0.85, t, fontsize=10, color=c if i == 0 else INK, va="center")
+        ax.plot([0.15], [2.7 - i * 0.85], "s", color=c, ms=7)
+    save(fig, "numa-node.png")
+
+
 if __name__ == "__main__":
     comm_stack()
     node_topologies()
     data_paths()
+    numa_node()

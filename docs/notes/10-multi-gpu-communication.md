@@ -3,6 +3,7 @@
 [Multi-GPU and NCCL](05-multi-gpu.md) covers the basics. This page goes one level down:
 
 - what each hardware link is and how fast it is;
+- how the CPU sockets (NUMA) decide which host memory and NIC each GPU should use;
 - what each software layer does, on NVIDIA and on AMD;
 - which path a transfer really takes, and where data should not go.
 
@@ -121,6 +122,112 @@ lspci -tv                   # the PCIe tree, any vendor
 
 The same matrix shows which **NIC** is closest to each GPU. GPUDirect RDMA is only fast
 when the GPU and NIC share a PCIe switch (`PIX`/`PXB`).
+
+## NUMA: the CPU side of the topology
+
+GPUs and NICs don't float free in a server. Each one is attached to a **CPU socket**, and
+the sockets are not equal. That is **NUMA** (Non-Uniform Memory Access).
+
+- Every socket has its **own memory controllers and DRAM**, and its own **PCIe root
+  complex**.
+- Memory on your own socket is **local**. Memory on the other socket is **remote**: it is
+  reached over the socket interconnect (Intel **UPI**, or **Infinity Fabric** between AMD
+  EPYC sockets). That costs extra latency, often ~1.5–2× local, and the bandwidth is shared
+  by all cross-socket traffic.
+- The OS exposes each socket (or part of one) as a **NUMA node**, with its cores, its
+  memory, and the PCIe devices under its root complex.
+
+![A dual-socket GPU server: two NUMA nodes, each with its own memory, PCIe, GPUs and NIC](../assets/img/numa-node.png)
+
+A typical 8-GPU, dual-socket server puts GPUs 0–3 and their NICs on node 0, and GPUs 4–7 on
+node 1. **Check, don't assume.** Some boards interleave, and the CUDA device order can
+differ from the PCIe order (set `CUDA_DEVICE_ORDER=PCI_BUS_ID` to make them match).
+
+### More NUMA nodes than sockets
+
+- **AMD EPYC NPS** (nodes per socket: NPS1, NPS2, NPS4) and **Intel Sub-NUMA Clustering**
+  (SNC2, SNC4) split each socket into 2–4 NUMA nodes. These are BIOS settings.
+- More nodes give lower local latency, but more ways to be remote. Many GPU servers run
+  NPS1 or SNC off for simplicity. `lscpu` shows what you have.
+
+The GPU can be a NUMA node too:
+
+- **Grace Hopper (GH200):** the GPU's HBM appears to Linux as its **own NUMA node**, with
+  memory and no CPUs, reachable by the CPU over NVLink-C2C.
+- **MI300A:** CPU and GPU share one pool of HBM.
+- **MI300X:** can partition its own HBM into NUMA domains (memory partition modes NPS1 /
+  NPS4, alongside the compute partition modes).
+
+### Why it matters for GPU work
+
+With NVLink or NVSwitch, GPU-to-GPU traffic never touches the CPUs, so NUMA doesn't
+affect it. NUMA matters for everything that goes **through the host or the PCIe tree**:
+
+| What | If it is on the wrong NUMA node | Effect |
+|---|---|---|
+| Pinned host buffers (`pin_memory=True`, `cudaHostAlloc`) | the DMA crosses the socket link | lower, noisier host↔device bandwidth |
+| The rank's main thread (kernel launches) | it runs on the far socket | launch latency jitter, slower Python overhead |
+| DataLoader workers and preprocessing | they read and write remote memory | the input pipeline slows; the GPU waits |
+| NCCL `SHM` transport, host bounce copies | the staging buffer is remote | slower intra-node fallback paths |
+| GPUDirect RDMA | the NIC is on the other socket | NCCL may disable GDR and stage through host memory (`NCCL_NET_GDR_LEVEL`) |
+| GPU ↔ GPU over PCIe, no NVLink | `SYS` path through both sockets | P2P slow, or turned off entirely |
+
+**Placement follows first touch.** Linux puts a page on the NUMA node of the CPU that
+**first writes it**, not the one that allocated it. Whatever thread first fills or pins a
+buffer decides where it lives. So **bind the process before it allocates**. Binding
+afterwards moves the threads, not the memory already in place.
+
+**Automatic NUMA balancing** (`/proc/sys/kernel/numa_balancing`) migrates pages towards
+the threads using them. On GPU servers it can add latency spikes, and AMD's MI300X tuning
+guide recommends turning it off. Measure before and after rather than taking it on
+faith.
+
+### Inspecting NUMA
+
+```bash
+lscpu | grep -i numa                 # NUMA nodes and which cores belong to each
+numactl --hardware                   # memory per node and the distance matrix (10 = local)
+nvidia-smi topo -m                   # last columns: CPU Affinity and NUMA Affinity per GPU
+cat /sys/bus/pci/devices/0000:18:00.0/numa_node   # node of any PCIe device; -1 = unknown
+lstopo                               # hwloc: draws sockets, caches, NUMA nodes and PCIe devices
+rocm-smi --showtoponuma              # AMD: NUMA node of each GPU
+```
+
+### Binding each rank to its GPU's NUMA node
+
+The rule: **one process per GPU, running on the cores of the GPU's NUMA node, with its
+memory there too.** DataLoader workers are forked from the rank and inherit its CPU
+binding, so binding the rank binds them as well. Keep `num_workers` × ranks per node within
+that node's cores.
+
+```bash
+# Slurm: each task gets one GPU and the cores closest to it
+srun --gpus-per-task=1 --gpu-bind=closest --cpu-bind=cores python train.py
+
+# Open MPI: 4 ranks per NUMA node, each bound to it (GPUs 0-3 on node 0, 4-7 on node 1)
+mpirun -np 8 --map-by ppr:4:numa --bind-to numa python train.py
+
+# One process by hand
+numactl --cpunodebind=0 --membind=0 python train.py
+
+# torchrun: wrap each rank with the script below
+torchrun --nproc_per_node=8 --no-python docs/notes/numa_bind.sh python train.py
+```
+
+The wrapper looks up the GPU's NUMA node from its PCI address, then runs the rank under
+`numactl`:
+
+```bash
+--8<-- "docs/notes/numa_bind.sh"
+```
+
+Its fallback paths were tested in Docker: no GPU, no NUMA support, and under `torchrun`.
+The binding path itself needs a real multi-socket machine.
+
+To check that binding helped, compare host-to-device bandwidth from a pinned buffer with
+the rank bound to the GPU's node and to the other node. The far node should be
+measurably slower and noisier. If it isn't, the server may be single-node (NPS1 on one
+socket), or the platform may hide NUMA (many VMs).
 
 ## Software: the layers
 
@@ -301,6 +408,9 @@ Rules:
 8. **Host ↔ device:** pinned memory (`pin_memory=True`) and `non_blocking=True` copies,
    overlapped on their own stream. Nothing per-step in the training loop should call
    `.item()`.
+9. **Keep the host side local.** Bind each rank, its pinned buffers and its DataLoader
+   workers to its GPU's NUMA node, and use the NIC on the same socket. See
+   [NUMA](#numa-the-cpu-side-of-the-topology).
 
 ### Worked estimate: all-reduce 1 GB of gradients
 
