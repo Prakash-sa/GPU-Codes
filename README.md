@@ -21,6 +21,7 @@ GPU stacks) and a GPU hardware reference sheet.
 | [9. Optimization strategies](docs/notes/09-optimization-strategies.md) | Bottleneck diagnosis and fixes for memory-, latency-, compute- and launch-bound code, multi-GPU |
 | [10. How GPUs talk to each other](docs/notes/10-multi-gpu-communication.md) | NVLink, NVSwitch, PCIe, InfiniBand, Infinity Fabric, NUMA; NCCL, RCCL, MPI, NVSHMEM; NVIDIA vs AMD; where data should and shouldn't move |
 | [Interview Q&A](docs/interview-qa.md) | GPU, ML-systems and multi-GPU interview questions with short answers |
+| [Before GPU Engineering](docs/before-gpu/index.html) | 56-chapter first-principles notebook on GPU hardware by Ranjan Yadav (MIT), mirrored with a chapter navbar |
 | [Cheat sheet](docs/notes/cheatsheet.md) | Quick reference of APIs, limits and formulas |
 | [LeetGPU solutions (Triton)](docs/leetgpu/index.md) | 20 challenges: one `.py` (kernel + `solve()` + tests) and one `.md` (explanation, T4 vs H100, profiling, scaling, videos) each. See also [benchmark, profile, scale](docs/leetgpu/benchmarking.md) |
 
@@ -54,6 +55,18 @@ pip install -r requirements-figures.txt
 python scripts/make_figures.py
 python scripts/make_leetgpu_figures.py
 python scripts/make_comm_figures.py
+```
+
+## Updating the Before GPU Engineering notebook
+
+`docs/before-gpu/` is a copy of
+[BEFORE-GPU-ENGINEERING](https://github.com/BEFORE-GPU-ENGINEERING/BEFORE-GPU-ENGINEERING)
+(MIT, © Ranjan Yadav). The chapter pages are unchanged apart from their links and
+the navbar includes; `navbar.js` and `navbar.css` are ours. To pull new chapters:
+
+```bash
+git clone --depth 1 https://github.com/BEFORE-GPU-ENGINEERING/BEFORE-GPU-ENGINEERING /tmp/bge
+python scripts/import_before_gpu.py /tmp/bge
 ```
 
 ## Publishing to GitHub Pages

@@ -12,6 +12,7 @@ have run workloads on.
   multi-GPU and profiling.
 - **[Cheat sheet](notes/cheatsheet.md)**: one page of APIs, limits and formulas.
 - **[Interview Q&A](interview-qa.md)**: GPU, ML-systems and multi-GPU interview questions with short answers.
+- **[Before GPU Engineering](before-gpu/index.html)**: a 56-chapter, first-principles notebook on how GPU hardware works, from transistors to profiling. By Ranjan Yadav (MIT), mirrored here with a chapter navbar.
 - **[LeetGPU solutions in Triton](leetgpu/index.md)**: 20 optimized, tested kernels with explanations, T4 vs H100 notes, profiling steps and videos.
 
 ## Reading order
