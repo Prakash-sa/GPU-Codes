@@ -279,6 +279,83 @@ Cost per unit of each resource, from the prices in the table above:
 | p5en.48xlarge | Memory-bound or memory-hungry jobs (141 GB per GPU, 4.8 TB/s) | Same NVLink as p5; benefits come from memory and the Gen5 host link |
 | p6-b200.48xlarge | Largest models, FP8/FP4 inference and training | Highest $/GPU-hour: needs high utilization to pay off; keep TP inside the instance |
 
+## Eight 1-GPU instances instead of one 8-GPU instance
+
+You can run an 8-GPU job on eight p5.4xlarge instances instead of one p5.48xlarge. The
+code barely changes; the hardware between the GPUs does.
+
+| | 1 × p5.48xlarge | 8 × p5.4xlarge |
+|---|---|---|
+| GPUs | 8 × H100 80 GB | 8 × H100 80 GB |
+| Price (on-demand, above) | $55.04/h | 8 × $6.88 = **$55.04/h** |
+| GPU ↔ GPU | NVLink + NVSwitch, 450 GB/s each way | EFA, 100 Gb/s = 12.5 GB/s each way |
+| GPUDirect RDMA | yes | no: GPU → host memory → NIC |
+| vCPUs / RAM / NVMe | 192 / 2 TiB / 8 × 3.8 TB | 128 / 8 × 256 GiB / 8 × 3.8 TB |
+| 1 GB ring all-reduce (lower bound) | ~4 ms (less with NVLS) | ~140 ms |
+
+At the same price, the 8-GPU instance has a GPU-to-GPU link ~36× faster. The all-reduce
+times are lower bounds from link speed (each GPU sends 2 × 7/8 × 1 GB = 1.75 GB), not
+measurements; the host staging on p5.4xlarge only adds to them.
+
+### How to run it
+
+1. **Launch** eight p5.4xlarge instances in one Availability Zone, in a cluster placement
+   group (or a Capacity Block), from the Deep Learning AMI. Attach each instance's network
+   card as an **EFA** interface, and use a security group that allows all traffic to and
+   from itself (EFA requires this).
+2. **Share code and data**: FSx for Lustre or EFS mounted on every node, or sync from S3
+   at start-up. Use one directory for checkpoints that every node can read.
+3. **Start one process per instance.** The training script is the same as single-node
+   DDP or FSDP; only the launcher changes:
+
+    ```bash
+    # on each node i = 0..7 (HEAD = private IP of node 0)
+    torchrun --nnodes=8 --nproc_per_node=1 --node_rank=$i \
+             --rdzv_backend=c10d --rdzv_endpoint=$HEAD:29500 train.py
+
+    # or with Slurm (e.g. AWS ParallelCluster): srun starts torchrun once per node
+    HEAD=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n1)
+    srun --nodes=8 --ntasks-per-node=1 --gpus-per-node=1 \
+         torchrun --nnodes=8 --nproc_per_node=1 \
+                  --rdzv_backend=c10d --rdzv_endpoint=$HEAD:29500 train.py
+    ```
+
+    `LOCAL_RANK` is 0 everywhere and `RANK` runs 0–7. Shard the data with
+    `DistributedSampler` and write checkpoints from rank 0 only.
+4. **Check that NCCL uses EFA.** With `NCCL_DEBUG=INFO`, the log should show the OFI
+   plugin with the `efa` provider. `NET/Socket` means it fell back to TCP. Then run
+   `nccl-tests` `all_reduce_perf` across the 8 nodes. Bus bandwidth can't exceed the
+   ~12 GB/s line rate, compared with hundreds of GB/s inside one p5.48xlarge.
+
+### Make the job fit the slower link
+
+- **Data parallelism only.** Never split one layer (tensor parallelism) or one expert
+  layer across these instances; that traffic needs NVLink.
+- **Communicate less often.** Use gradient accumulation (all-reduce every *k*
+  micro-batches), larger DDP buckets, and BF16 gradient compression (DDP's
+  `bf16_compress_hook`). Make sure communication overlaps the backward pass.
+- **FSDP**: full sharding across nodes gathers parameters over EFA every layer. Shard only
+  if the model doesn't fit in 80 GB, and expect communication to dominate.
+- **CFD and stencils**: give each GPU a large subdomain, so the halo (surface) is small
+  next to the interior (volume), and compute the interior while halos are in flight.
+- **Rule of thumb**: if a step's compute time is well above its communication time
+  (bytes ÷ 12.5 GB/s), eight small instances scale fine. If not, they don't.
+
+### When eight small instances are the better choice
+
+- **Independent jobs**: parameter sweeps, ensembles, separate simulations or inference
+  replicas. There is no communication at all, so the interconnect doesn't matter, and
+  each instance can start, finish and be stopped on its own schedule.
+- **Capacity**: single-GPU instances can be easier to get than a whole 8-GPU box.
+- **Fault isolation and elasticity**: one failure takes down one GPU, not eight, and you
+  can scale between 1 and 8 as the queue changes (with `torchrun --nnodes=1:8` for
+  elastic training).
+
+For anything that talks every step, at the same price, take the single 8-GPU instance.
+The same reasoning rules out 8 × g6e.2xlarge for coupled jobs: no EFA, only up to
+20 Gb/s of ordinary networking. For 8 L40S in one box, g6e.48xlarge keeps the traffic on
+PCIe inside a single host.
+
 ## Check it on the instance
 
 ```bash
