@@ -153,6 +153,132 @@ Rules that follow:
 4. On the single-GPU sizes, the host link is your only link: load the working set once and
    keep it resident.
 
+## Running them well: performance, efficiency, utilization
+
+The goal is the lowest **cost per finished result** (time to solution × $/h), not the
+highest GPU-Util number. Work through the levels in order: pick the right box, set it up
+so nothing outside the GPU is the bottleneck, keep the GPU busy with useful work, and
+stop paying when it isn't.
+
+### 1. Pick the instance by what limits the job
+
+Cost per unit of each resource, from the prices in the table above:
+
+| Instance | $/GPU-hour | $/h per 100 GB of GPU memory | $/h per TB/s of GPU memory bandwidth |
+|---|---|---|---|
+| g6e.2xlarge | 2.24 | 4.67 | 2.59 |
+| p5.4xlarge | 6.88 | 8.60 | 2.05 |
+| p4d.24xlarge | 2.75 | 6.86 | 1.77 |
+| p5.48xlarge | 6.88 | 8.60 | 2.05 |
+| p5en.48xlarge | 7.91 | 5.61 | **1.65** |
+| p6-b200.48xlarge | 14.24 | 7.96 | 1.78 |
+
+- **Memory-bandwidth-bound jobs** (stencils, LBM, SpMV, statevector, LLM decode) run at a
+  speed roughly proportional to HBM bandwidth, so the last column is the cost per unit of
+  work. The cheapest GPU-hour (g6e) is the most expensive way to move bytes; p5en is the
+  cheapest. Measure your own kernel, but start from this column, not the first.
+- **Capacity-bound jobs** (the model, lattice or statevector must fit): the middle column.
+  An H200 holds 1.76× an H100's data, which can turn a 2-GPU job into a 1-GPU job and
+  remove the communication entirely.
+- **Double precision:** the L40S does ~1.4 TFLOPS FP64, against 34 (67 with tensor
+  cores) on the H100. Don't run FP64 solvers on g6e
+  ([spec sheets](../gpu-spec-sheets.md)).
+- **Tensor-core training and inference:** H100/H200 add FP8 (Transformer Engine) and B200
+  adds FP4. These matter only if your framework uses them; otherwise compare BF16
+  throughput.
+- **One GPU or eight:** never build a multi-GPU job from several p5.4xlarge instances
+  (no NVLink, no GPUDirect RDMA). If you need more than one GPU's memory or tight
+  coupling, use one 8-GPU instance.
+- **Many small independent jobs:** run one per GPU on an 8-GPU instance
+  (`CUDA_VISIBLE_DEVICES=i`, each pinned to its GPU's NUMA node), or split GPUs with MIG
+  (A100, H100 and H200 support up to 7 instances each). Only do this if you can keep all
+  eight busy; otherwise single-GPU instances waste less.
+
+### 2. Set up the instance so the host and network keep up
+
+- **Start from a matching software stack.** The AWS Deep Learning AMIs and containers ship
+  the NVIDIA driver, CUDA, NCCL, the EFA installer and the `aws-ofi-nccl` plugin as a
+  tested set. Mismatched NCCL and plugin versions are the most common cause of slow
+  multi-node runs.
+- **Attach every EFA interface.** On p4d, p5, p5en and p6, launch with one EFA interface
+  per network card (4, 32, 16 and 8). Fewer interfaces silently means less bandwidth. For
+  multi-node on-demand or Spot, put instances in a **cluster placement group**; instances
+  in a Capacity Block are placed close together by AWS and don't take a placement group.
+- **Let the plugin pick the network settings.** Recent `aws-ofi-nccl` sets its own EFA
+  defaults; keep it current instead of copying old lists of `FI_*` and `NCCL_*` variables.
+  Check with `NCCL_DEBUG=INFO` that NCCL loads the OFI plugin and finds every EFA device.
+- **Bind to NUMA.** One rank per GPU, with its CPU threads, pinned buffers and DataLoader
+  workers on that GPU's socket ([`numa_bind.sh`](10-multi-gpu-communication.md#binding-each-rank-to-its-gpus-numa-node)).
+- **Use the local NVMe.** The 8 instance-store drives are fast but wiped when the
+  instance stops. Stripe them into one RAID 0 volume for datasets, scratch and
+  checkpoints, then copy what you need to keep to S3 (or FSx for Lustre for shared data).
+- **Check the hardware before a long run.** Run `nvidia-smi -pm 1` (persistence mode),
+  `dcgmi diag -r 1` (quick health check) and one `nccl-tests` all-reduce. A single slow
+  GPU or missing EFA device slows every rank of a synchronous job.
+
+### 3. Keep the GPUs busy with useful work
+
+- **Measure real utilization.** `nvidia-smi`'s GPU-Util only says *some* kernel was
+  running. Use DCGM's profiling counters, for example
+  `dcgmi dmon -e 1002,1003,1004,1005` (SM active, SM occupancy, tensor pipe active,
+  DRAM active), or Nsight Systems for the timeline ([profiling](06-profiling.md)).
+- **Feed the GPU.** Use pinned host memory with `non_blocking=True` copies, enough
+  DataLoader workers, and prefetching, so the next batch is already on the GPU. On p4d
+  (PCIe Gen3) and p5 (Gen4) this matters more than on p5en and p6 (Gen5).
+- **Use the fast math units.** BF16 or TF32 matmuls
+  (`torch.set_float32_matmul_precision("high")`), FP8 where your stack supports it on
+  Hopper and Blackwell, fused kernels (FlashAttention, fused optimizers), and
+  `torch.compile`.
+- **Cut launch overhead.** Small kernels leave a fast GPU idle between launches. Use CUDA
+  Graphs, fusion and larger batches ([optimization strategies](09-optimization-strategies.md)).
+- **Spend the memory.** On H200 and B200, use the extra memory for larger batches or less
+  sharding before reaching for activation checkpointing, which trades memory for
+  recomputation.
+- **Overlap communication with compute.** DDP gradient buckets and FSDP prefetch hide
+  collectives behind the backward pass; check in the timeline that NCCL kernels run
+  alongside compute, not after it.
+
+### 4. Map the parallelism onto the links
+
+- **Inside one 8-GPU instance (NVLink):** tensor, sequence and expert parallelism, and
+  FSDP sharding. These send data every layer.
+- **Across instances (EFA):** data parallelism and pipeline stages, which send once per
+  step or once per micro-batch. With FSDP, use hybrid sharding (shard inside the
+  instance, replicate across instances) so the per-layer gathers stay on NVLink.
+- **Domain decomposition (CFD, stencils):** give each GPU a slab, exchange halos with
+  NCCL send/recv or CUDA-aware MPI over NVLink, and keep the halo small relative to the
+  interior so compute hides the exchange.
+- **Check the result.** `nccl-tests` bus bandwidth inside one instance should be close
+  to the NVLink figure, and across instances close to the EFA figure. A large shortfall
+  means a setup problem, not a property of the hardware.
+
+### 5. Don't pay for idle hardware
+
+- **Stop or terminate instances as soon as the job ends.** An 8-GPU instance idling for
+  an hour costs as much as a full hour of work. Auto-stop on low GPU utilization, or run
+  jobs through a scheduler (AWS Batch, ParallelCluster with Slurm, EKS, SageMaker) that
+  releases nodes when the queue is empty.
+- **Match the purchase option to the job.** Spot for jobs that checkpoint often and can
+  restart; [EC2 Capacity Blocks for ML](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-capacity-blocks.html)
+  to reserve p4d, p5 (both sizes), p5en or p6-b200 for days or weeks (no cancellations);
+  Savings Plans for steady long-term use.
+- **Checkpoint for restarts, not just for safety.** Write to local NVMe asynchronously,
+  then copy to S3, so a checkpoint costs seconds of GPU time and a lost node costs only
+  the steps since the last one.
+- **Track cost per result.** Log time per step (or per solve) and the instance price.
+  Re-run the comparison when you change instance, precision or parallel layout.
+
+### Per-instance checklist
+
+| Instance | Best use | Watch out for |
+|---|---|---|
+| g6e.2xlarge | FP32/BF16 inference, development, small single-GPU jobs | Weak FP64; PCIe-only; no EFA, so no multi-node |
+| p5.4xlarge | Single-GPU H100 work: profiling, kernel tuning, jobs that fit in 80 GB | No NVLink or GPUDirect RDMA: don't chain several for one job |
+| p4d.24xlarge | 8-GPU NVLink jobs on a budget; FP64 (A100: 9.7 / 19.5 tensor TFLOPS) | Gen3 host link; 50 Gb/s EFA per GPU limits multi-node scaling |
+| p5.48xlarge | Large training, multi-GPU CFD, NVLS all-reduce | Gen4 host link: keep data resident; attach all 32 EFA interfaces |
+| p5en.48xlarge | Memory-bound or memory-hungry jobs (141 GB per GPU, 4.8 TB/s) | Same NVLink as p5; benefits come from memory and the Gen5 host link |
+| p6-b200.48xlarge | Largest models, FP8/FP4 inference and training | Highest $/GPU-hour: needs high utilization to pay off; keep TP inside the instance |
+
 ## Check it on the instance
 
 ```bash
