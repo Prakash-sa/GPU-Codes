@@ -36,6 +36,9 @@ vendor datasheet peaks (dense, no sparsity).
 | Statevector ceiling, double/single | 29 / 30 qubits | 31 / 32 qubits | **32 / 33 qubits** | 31 / 32 qubits | **32 / 33 qubits** |
 | Supported by cuStateVec | yes | yes | yes (CUDA ≥ 12.8) | yes | yes |
 
+How these GPUs are wired inside each AWS instance (NVLink, NVSwitch, PCIe, CPUs, EFA) is
+drawn on [Inside AWS GPU instances](notes/11-aws-gpu-instances.md).
+
 ## Memory bandwidth
 
 ![Bar charts of memory bandwidth and FP64 throughput](assets/img/spec-bars.png)

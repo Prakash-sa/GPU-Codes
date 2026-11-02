@@ -123,6 +123,9 @@ lspci -tv                   # the PCIe tree, any vendor
 The same matrix shows which **NIC** is closest to each GPU. GPUDirect RDMA is only fast
 when the GPU and NIC share a PCIe switch (`PIX`/`PXB`).
 
+For the actual wiring of AWS's g6e, p4d, p5, p5en and p6-b200 instances, see
+[Inside AWS GPU instances](11-aws-gpu-instances.md).
+
 ## NUMA: the CPU side of the topology
 
 GPUs and NICs don't float free in a server. Each one is attached to a **CPU socket**, and

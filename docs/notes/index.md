@@ -15,6 +15,7 @@ is short, with the mental model first and then the practical rules.
 | 8 | [Programming with Triton](08-triton.md) | How do I write fused, tiled kernels in Python? |
 | 9 | [Optimization strategies](09-optimization-strategies.md) | What is my bottleneck, and which fix applies? |
 | 10 | [How GPUs talk to each other](10-multi-gpu-communication.md) | NVLink, NVSwitch, PCIe, InfiniBand, NUMA; NCCL, RCCL, MPI; NVIDIA vs AMD; where data should move |
+| 11 | [Inside AWS GPU instances](11-aws-gpu-instances.md) | How are the GPUs, NVSwitches, CPUs and NICs wired in g6e, p4d, p5, p5en and p6-b200? |
 | — | [Cheat sheet](cheatsheet.md) | Quick lookup |
 | — | [Before GPU Engineering](before-gpu/index.md) | 56 chapters by Ranjan Yadav: why GPUs are built the way they are, from transistors to profiling. Good to read first |
 
