@@ -92,8 +92,8 @@ Three things set the shape of each box:
 ### Host and network
 
 - The H100s are PCIe Gen5, but the EPYC Milan roots are Gen4, so host ↔ GPU copies top
-  out near 32 GB/s each way. That is ~100× slower than NVLink: never route GPU-to-GPU
-  data through host memory.
+  out near 32 GB/s each way. That is ~14× slower than NVLink's 450 GB/s each way:
+  never route GPU-to-GPU data through host memory.
 - There are 32 × 100 Gb EFA cards, 4 per GPU, on the same PCIe switch as their GPU.
   GPUDirect RDMA sends straight from HBM to the NIC without the CPU. Bind each rank to its
   socket's cores and memory (GPUs 0–3 on socket 0 and 4–7 on socket 1 in this layout;
