@@ -1,11 +1,11 @@
 ---
-title: "10. Why occupancy matters"
+title: "Chapter 10: Why occupancy matters"
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-yellow">Why occupancy matters</span></h1>
-<p class="bge-meta">Phase 1 · Part 3: Inside the Silicon · Chapter 10 of 56 · notebook date 24 / jun / 26</p>
+<p class="bge-meta">Part 3: Inside the Silicon · Chapter 10 of 56 · notebook date 24 / jun / 26</p>
 <span class="annotation">*worked out from first principles*</span>
 
 <!-- Introduction -->

@@ -1,11 +1,11 @@
 ---
-title: "23. What syncthreads protects"
+title: "Chapter 23: What syncthreads protects"
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-pink">What <code>__syncthreads()</code> actually protects</span></h1>
-<p class="bge-meta">Phase 2 · Synchronization &amp; Hazards · Chapter 23 of 56 · notebook date 11 / jul / 26</p>
+<p class="bge-meta">Part 7: Synchronization &amp; Hazards · Chapter 23 of 56 · notebook date 11 / jul / 26</p>
 <span class="annotation">*the seam that holds cooperative GPU code together*</span>
 
 <!-- Intro -->

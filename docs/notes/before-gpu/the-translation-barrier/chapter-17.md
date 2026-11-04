@@ -1,11 +1,11 @@
 ---
-title: "17. A kernel is not a function"
+title: "Chapter 17: A kernel is not a function"
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-yellow">A kernel is not a function</span></h1>
-<p class="bge-meta">Phase 2 · The Translation Barrier · Chapter 17 of 56 · notebook date 02 / jul / 26</p>
+<p class="bge-meta">Part 5: The Translation Barrier · Chapter 17 of 56 · notebook date 02 / jul / 26</p>
 <span class="annotation">*stamping the mold*</span>
 
 <!-- Introduction -->

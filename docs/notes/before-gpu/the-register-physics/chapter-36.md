@@ -1,11 +1,11 @@
 ---
-title: "36. Why not build a GPU entirely from registers?"
+title: "Chapter 36: Why not build a GPU entirely from registers?"
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-yellow" style="font-size: 0.9em;">Why not build a GPU entirely from registers?</span></h1>
-<p class="bge-meta">Phase 3 · The Register Physics · Chapter 36 of 56 · notebook date 17 / jul / 26</p>
+<p class="bge-meta">Part 10: The Register Physics · Chapter 36 of 56 · notebook date 17 / jul / 26</p>
 <span class="annotation">*the art of being approximately right*</span>
 
 <!-- Section: Introduction -->

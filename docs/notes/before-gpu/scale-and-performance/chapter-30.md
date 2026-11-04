@@ -1,11 +1,11 @@
 ---
-title: "30. Why GPU programs actually slow down"
+title: "Chapter 30: Why GPU programs actually slow down"
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-yellow">Why GPU programs actually slow down</span></h1>
-<p class="bge-meta">Phase 2 · Scale &amp; Performance · Chapter 30 of 56 · notebook date 17 / jul / 26</p>
+<p class="bge-meta">Part 8: Scale &amp; Performance · Chapter 30 of 56 · notebook date 17 / jul / 26</p>
 <span class="annotation">*worked out from first principles*</span>
 
 <!-- Section: The Six Horsemen -->

@@ -1,11 +1,11 @@
 ---
-title: "48. Register tiling: The tile inside the tile."
+title: "Chapter 48: Register tiling: The tile inside the tile."
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-yellow" style="font-size: 0.9em;">Register tiling: The tile inside the tile.</span></h1>
-<p class="bge-meta">Phase 3 · Shared Memory &amp; Tiling · Chapter 48 of 56 · notebook date 24 / aug / 26</p>
+<p class="bge-meta">Part 13: Shared Memory &amp; Tiling · Chapter 48 of 56 · notebook date 24 / aug / 26</p>
 
 <p style="margin-top: calc(var(--grid-size) * 1.5);">
   There is a technique that makes fast matrix multiplication several times faster still, on top of the usual trick of staging data in fast shared memory, and it hinges on an idea that sounds almost too simple to matter. You tile a second time, inside the first tiling. And the reason this compounds into a large win rather than a small one is a piece of arithmetic worth internalizing, because two levels of reuse do not add together, they multiply. Understanding why is understanding how the fastest kernels actually reach their speed.

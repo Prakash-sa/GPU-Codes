@@ -1,11 +1,11 @@
 ---
-title: "4. Why GPUs care so much about memory bandwidth"
+title: "Chapter 4: Why GPUs care so much about memory bandwidth"
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-yellow">Why GPUs care so much about memory bandwidth</span></h1>
-<p class="bge-meta">Phase 1 · Part 2: Feeding the Beast · Chapter 4 of 56 · notebook date 18 / jun / 26</p>
+<p class="bge-meta">Part 2: Feeding the Beast · Chapter 4 of 56 · notebook date 18 / jun / 26</p>
 <span class="annotation">*worked out from first principles*</span>
 
 <!-- Introduction -->

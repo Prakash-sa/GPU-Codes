@@ -1,11 +1,11 @@
 ---
-title: "20. Why shared memory is fast"
+title: "Chapter 20: Why shared memory is fast"
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-pink">Why shared memory is fast</span></h1>
-<p class="bge-meta">Phase 2 · The Hardware Hierarchy · Chapter 20 of 56 · notebook date 08 / jul / 26</p>
+<p class="bge-meta">Part 6: The Hardware Hierarchy · Chapter 20 of 56 · notebook date 08 / jul / 26</p>
 <span class="annotation">*the scratchpad and the art of data reuse*</span>
 
 <!-- Intro -->

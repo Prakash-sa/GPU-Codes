@@ -1,11 +1,11 @@
 ---
-title: "52. Measure, don't guess: the top-down profiling discipline"
+title: "Chapter 52: Measure, don't guess: the top-down profiling discipline"
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-yellow" style="font-size: 0.9em;">Measure, don't guess: the top-down profiling discipline</span></h1>
-<p class="bge-meta">Phase 3 · GEMM &amp; The Synthesis · Chapter 52 of 56 · notebook date 28 / aug / 26</p>
+<p class="bge-meta">Part 14: GEMM &amp; The Synthesis · Chapter 52 of 56 · notebook date 28 / aug / 26</p>
 <span class="annotation">*the empirical mindset*</span>
 
 <!-- Section: Introduction -->

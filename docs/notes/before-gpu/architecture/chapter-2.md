@@ -1,11 +1,11 @@
 ---
-title: "2. Why a GPU multiplies matrices faster"
+title: "Chapter 2: Why a GPU multiplies matrices faster"
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-yellow">Why a GPU Multiplies Matrices Faster</span></h1>
-<p class="bge-meta">Phase 1 · Part 1: The Architecture · Chapter 2 of 56 · notebook date 16 / jun / 26</p>
+<p class="bge-meta">Part 1: The Architecture · Chapter 2 of 56 · notebook date 16 / jun / 26</p>
 <span class="annotation">*worked out from first principles*</span>
 
 <!-- Introduction -->

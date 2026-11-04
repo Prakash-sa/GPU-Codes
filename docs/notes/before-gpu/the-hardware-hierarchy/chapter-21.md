@@ -1,11 +1,11 @@
 ---
-title: "21. Why RAM isn't visible to the GPU"
+title: "Chapter 21: Why RAM isn't visible to the GPU"
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-pink">Why RAM isn't visible to the GPU</span></h1>
-<p class="bge-meta">Phase 2 · The Hardware Hierarchy · Chapter 21 of 56 · notebook date 15 / jul / 26</p>
+<p class="bge-meta">Part 6: The Hardware Hierarchy · Chapter 21 of 56 · notebook date 15 / jul / 26</p>
 <span class="annotation">*two computers, one box, one very narrow bridge*</span>
 
 <!-- Intro -->

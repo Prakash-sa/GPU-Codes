@@ -1,11 +1,11 @@
 ---
-title: "42. When spilling is acceptable: and when it destroys performance."
+title: "Chapter 42: When spilling is acceptable: and when it destroys performance."
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-yellow" style="font-size: 0.9em;">When spilling is acceptable: and when it destroys performance.</span></h1>
-<p class="bge-meta">Phase 3 · Register Spilling · Chapter 42 of 56 · notebook date 17 / jul / 26</p>
+<p class="bge-meta">Part 11: Register Spilling · Chapter 42 of 56 · notebook date 17 / jul / 26</p>
 <span class="annotation">*the thirty-two windows*</span>
 
 <!-- Section: Introduction -->

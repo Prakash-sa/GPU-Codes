@@ -1,11 +1,11 @@
 ---
-title: "32. When NOT to use a GPU — and the reduction tree"
+title: "Chapter 32: When NOT to use a GPU — and the reduction tree"
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-yellow">When NOT to use a GPU — and the reduction tree</span></h1>
-<p class="bge-meta">Phase 2 · Scale &amp; Performance · Chapter 32 of 56 · notebook date 17 / jul / 26</p>
+<p class="bge-meta">Part 8: Scale &amp; Performance · Chapter 32 of 56 · notebook date 17 / jul / 26</p>
 <span class="annotation">*worked out from first principles*</span>
 
 <!-- Section: Introduction -->

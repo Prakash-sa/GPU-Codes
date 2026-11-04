@@ -1,11 +1,11 @@
 ---
-title: "19. Why threads group into blocks"
+title: "Chapter 19: Why threads group into blocks"
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-pink">Why threads group into blocks</span></h1>
-<p class="bge-meta">Phase 2 · The Hardware Hierarchy · Chapter 19 of 56 · notebook date 07 / jul / 26</p>
+<p class="bge-meta">Part 6: The Hardware Hierarchy · Chapter 19 of 56 · notebook date 07 / jul / 26</p>
 <span class="annotation">*closeness is speed, and waiting can freeze the machine*</span>
 
 <!-- Intro -->

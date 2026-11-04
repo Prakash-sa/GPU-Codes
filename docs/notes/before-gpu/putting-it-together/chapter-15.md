@@ -1,11 +1,11 @@
 ---
-title: "15. Designing an LLM training processor"
+title: "Chapter 15: Designing an LLM training processor"
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-yellow">Designing an LLM training processor</span></h1>
-<p class="bge-meta">Phase 1 · Part 4: Putting it Together · Chapter 15 of 56 · notebook date 29 / jun / 26</p>
+<p class="bge-meta">Part 4: Putting it Together · Chapter 15 of 56 · notebook date 29 / jun / 26</p>
 <span class="annotation">*the final capstone blueprint*</span>
 
 <!-- Introduction -->

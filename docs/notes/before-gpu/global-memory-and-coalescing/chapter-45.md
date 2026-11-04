@@ -1,11 +1,11 @@
 ---
-title: "45. DRAM row-buffer thrashing: why scattered access is structurally broken."
+title: "Chapter 45: DRAM row-buffer thrashing: why scattered access is structurally broken."
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-yellow" style="font-size: 0.9em;">DRAM row-buffer thrashing: why scattered access is structurally broken.</span></h1>
-<p class="bge-meta">Phase 3 · Global Memory &amp; Coalescing · Chapter 45 of 56 · notebook date 17 / jul / 26</p>
+<p class="bge-meta">Part 12: Global Memory &amp; Coalescing · Chapter 45 of 56 · notebook date 17 / jul / 26</p>
 <span class="annotation">*the specialist circuit*</span>
 
 <!-- Section: Introduction -->

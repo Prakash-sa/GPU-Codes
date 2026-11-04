@@ -1,11 +1,11 @@
 ---
-title: "28. Why NVIDIA made CUDA asynchronous"
+title: "Chapter 28: Why NVIDIA made CUDA asynchronous"
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-yellow">Why NVIDIA made CUDA asynchronous</span></h1>
-<p class="bge-meta">Phase 2 · Scale &amp; Performance · Chapter 28 of 56 · notebook date 16 / jul / 26</p>
+<p class="bge-meta">Part 8: Scale &amp; Performance · Chapter 28 of 56 · notebook date 16 / jul / 26</p>
 <span class="annotation">*worked out from first principles*</span>
 
 <!-- Section 1 -->

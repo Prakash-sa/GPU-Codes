@@ -1,11 +1,11 @@
 ---
-title: "40. What is register spilling? The cliff between 1 ms and 50 ms."
+title: "Chapter 40: What is register spilling? The cliff between 1 ms and 50 ms."
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-yellow" style="font-size: 0.9em;">What is register spilling? The cliff between 1 ms and 50 ms.</span></h1>
-<p class="bge-meta">Phase 3 · Register Spilling · Chapter 40 of 56 · notebook date 17 / jul / 26</p>
+<p class="bge-meta">Part 11: Register Spilling · Chapter 40 of 56 · notebook date 17 / jul / 26</p>
 <span class="annotation">*the rolling batch*</span>
 
 <!-- Section: Introduction -->

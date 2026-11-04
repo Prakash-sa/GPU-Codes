@@ -1,11 +1,11 @@
 ---
-title: "1. Why CPUs Can't Have 10,000 Cores"
+title: "Chapter 1: Why CPUs Can't Have 10,000 Cores"
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-yellow">Why CPUs Can't Have 10,000 Cores</span></h1>
-<p class="bge-meta">Phase 1 · Part 1: The Architecture · Chapter 1 of 56 · notebook date 15 / jun / 26</p>
+<p class="bge-meta">Part 1: The Architecture · Chapter 1 of 56 · notebook date 15 / jun / 26</p>
 <span class="annotation">*worked out from first principles*</span>
 
 

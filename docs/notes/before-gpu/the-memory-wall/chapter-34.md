@@ -1,11 +1,11 @@
 ---
-title: "34. What is arithmetic intensity? The currency of GPU optimization."
+title: "Chapter 34: What is arithmetic intensity? The currency of GPU optimization."
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-yellow">What is arithmetic intensity? The currency of GPU optimization.</span></h1>
-<p class="bge-meta">Phase 3 · The Memory Wall · Chapter 34 of 56 · notebook date 17 / jul / 26</p>
+<p class="bge-meta">Part 9: The Memory Wall · Chapter 34 of 56 · notebook date 17 / jul / 26</p>
 <span class="annotation">*worked out from first principles*</span>
 
 <!-- Section: Introduction -->

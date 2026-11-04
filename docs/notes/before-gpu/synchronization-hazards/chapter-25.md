@@ -1,11 +1,11 @@
 ---
-title: "25. What makes CUDA code \"correct\""
+title: "Chapter 25: What makes CUDA code \"correct\""
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-pink">What actually makes a CUDA program "correct"</span></h1>
-<p class="bge-meta">Phase 2 · Synchronization &amp; Hazards · Chapter 25 of 56 · notebook date 13 / jul / 26</p>
+<p class="bge-meta">Part 7: Synchronization &amp; Hazards · Chapter 25 of 56 · notebook date 13 / jul / 26</p>
 <span class="annotation">*The Phantom of GPU Correctness*</span>
 
 <!-- Intro -->

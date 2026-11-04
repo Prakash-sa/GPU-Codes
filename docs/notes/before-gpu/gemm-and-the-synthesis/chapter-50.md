@@ -1,11 +1,11 @@
 ---
-title: "50. The traffic equation: throughput, latency, and concurrency"
+title: "Chapter 50: The traffic equation: throughput, latency, and concurrency"
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-yellow" style="font-size: 0.9em;">The traffic equation: throughput, latency, and concurrency</span></h1>
-<p class="bge-meta">Phase 3 · GEMM &amp; The Synthesis · Chapter 50 of 56 · notebook date 26 / aug / 26</p>
+<p class="bge-meta">Part 14: GEMM &amp; The Synthesis · Chapter 50 of 56 · notebook date 26 / aug / 26</p>
 <span class="annotation">*the arithmetic of productivity*</span>
 
 <!-- Section: Introduction -->

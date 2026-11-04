@@ -1,11 +1,11 @@
 ---
-title: "31. Why matrix add scales but a linked list dies"
+title: "Chapter 31: Why matrix add scales but a linked list dies"
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-yellow">Why matrix add scales but a linked list dies</span></h1>
-<p class="bge-meta">Phase 2 · Scale &amp; Performance · Chapter 31 of 56 · notebook date 17 / jul / 26</p>
+<p class="bge-meta">Part 8: Scale &amp; Performance · Chapter 31 of 56 · notebook date 17 / jul / 26</p>
 <span class="annotation">*worked out from first principles*</span>
 
 <!-- Section: Introduction -->

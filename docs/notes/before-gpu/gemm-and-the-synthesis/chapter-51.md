@@ -1,11 +1,11 @@
 ---
-title: "51. The second lever: hiding latency within a single thread"
+title: "Chapter 51: The second lever: hiding latency within a single thread"
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-yellow" style="font-size: 0.9em;">The second lever: hiding latency within a single thread</span></h1>
-<p class="bge-meta">Phase 3 · GEMM &amp; The Synthesis · Chapter 51 of 56 · notebook date 27 / aug / 26</p>
+<p class="bge-meta">Part 14: GEMM &amp; The Synthesis · Chapter 51 of 56 · notebook date 27 / aug / 26</p>
 <span class="annotation">*instruction-level parallelism*</span>
 
 <!-- Section: Introduction -->

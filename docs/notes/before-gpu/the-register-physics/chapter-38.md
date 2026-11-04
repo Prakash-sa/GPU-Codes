@@ -1,11 +1,11 @@
 ---
-title: "38. What is occupancy, really? It's a ratio, not a count — and 100% is not the goal."
+title: "Chapter 38: What is occupancy, really? It's a ratio, not a count — and 100% is not the goal."
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-yellow" style="font-size: 0.9em;">What is occupancy, really? It's a ratio, not a count — and 100% is not the goal.</span></h1>
-<p class="bge-meta">Phase 3 · The Register Physics · Chapter 38 of 56 · notebook date 17 / jul / 26</p>
+<p class="bge-meta">Part 10: The Register Physics · Chapter 38 of 56 · notebook date 17 / jul / 26</p>
 <span class="annotation">*the committee of specialists*</span>
 
 <!-- Section: Introduction -->

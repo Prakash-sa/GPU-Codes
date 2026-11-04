@@ -1,11 +1,11 @@
 ---
-title: "41. Splitting the giant"
+title: "Chapter 41: Splitting the giant"
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-yellow" style="font-size: 0.9em;">Splitting the giant</span></h1>
-<p class="bge-meta">Phase 3 · Register Spilling · Chapter 41 of 56 · notebook date 17 / jul / 26</p>
+<p class="bge-meta">Part 11: Register Spilling · Chapter 41 of 56 · notebook date 17 / jul / 26</p>
 <span class="annotation">*Why "local" memory is not local at all*</span>
 
 <!-- Section: Introduction -->

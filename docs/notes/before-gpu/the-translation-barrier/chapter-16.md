@@ -1,11 +1,11 @@
 ---
-title: "16. Why C++ won't auto-compile to GPU"
+title: "Chapter 16: Why C++ won't auto-compile to GPU"
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-yellow">Why C++ won't auto-compile into GPU code</span></h1>
-<p class="bge-meta">Phase 2 · The Translation Barrier · Chapter 16 of 56 · notebook date 01 / jul / 26</p>
+<p class="bge-meta">Part 5: The Translation Barrier · Chapter 16 of 56 · notebook date 01 / jul / 26</p>
 <span class="annotation">*the anatomy of a gpu thread*</span>
 
 <!-- Introduction -->

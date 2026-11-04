@@ -1,11 +1,11 @@
 ---
-title: "43. Why global memory latency is 350 to 1,000 cycles: the physics of distance."
+title: "Chapter 43: Why global memory latency is 350 to 1,000 cycles: the physics of distance."
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-yellow" style="font-size: 0.9em;">Why global memory latency is 350 to 1,000 cycles: the physics of distance.</span></h1>
-<p class="bge-meta">Phase 3 · Global Memory &amp; Coalescing · Chapter 43 of 56 · notebook date 17 / jul / 26</p>
+<p class="bge-meta">Part 12: Global Memory &amp; Coalescing · Chapter 43 of 56 · notebook date 17 / jul / 26</p>
 <span class="annotation">*passing notes*</span>
 
 <!-- Section: Introduction -->

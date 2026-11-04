@@ -1,11 +1,11 @@
 ---
-title: "22. Kernel launch overhead"
+title: "Chapter 22: Kernel launch overhead"
 ---
 
 <div class="bge">
                <!-- Title -->
                <h1><span class="hl-pink">Kernel launch overhead - the hidden tax</span></h1>
-<p class="bge-meta">Phase 2 · The Hardware Hierarchy · Chapter 22 of 56 · notebook date 16 / jul / 26</p>
+<p class="bge-meta">Part 6: The Hardware Hierarchy · Chapter 22 of 56 · notebook date 16 / jul / 26</p>
                <span class="annotation">*you don't send a cargo ship to deliver one letter*</span>
 
                <p>

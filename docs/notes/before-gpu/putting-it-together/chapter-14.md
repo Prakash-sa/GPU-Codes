@@ -1,11 +1,11 @@
 ---
-title: "14. The memory wall & HBM"
+title: "Chapter 14: The memory wall & HBM"
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-yellow">The memory wall & HBM</span></h1>
-<p class="bge-meta">Phase 1 · Part 4: Putting it Together · Chapter 14 of 56 · notebook date 28 / jun / 26</p>
+<p class="bge-meta">Part 4: Putting it Together · Chapter 14 of 56 · notebook date 28 / jun / 26</p>
 <span class="annotation">*worked out from first principles*</span>
 
 <!-- Introduction -->

@@ -1,11 +1,11 @@
 ---
-title: "3. What \"parallelizable\" actually means"
+title: "Chapter 3: What \"parallelizable\" actually means"
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-yellow">What "parallelizable" actually means</span></h1>
-<p class="bge-meta">Phase 1 · Part 1: The Architecture · Chapter 3 of 56 · notebook date 17 / jun / 26</p>
+<p class="bge-meta">Part 1: The Architecture · Chapter 3 of 56 · notebook date 17 / jun / 26</p>
 <span class="annotation">*worked out from first principles*</span>
 
 <!-- Introduction -->

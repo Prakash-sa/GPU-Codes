@@ -1,11 +1,11 @@
 ---
-title: "27. The step-by-step anatomy of a kernel launch"
+title: "Chapter 27: The step-by-step anatomy of a kernel launch"
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-yellow">The step-by-step anatomy of a kernel launch</span></h1>
-<p class="bge-meta">Phase 2 · Scale &amp; Performance · Chapter 27 of 56 · notebook date 15 / jul / 26</p>
+<p class="bge-meta">Part 8: Scale &amp; Performance · Chapter 27 of 56 · notebook date 15 / jul / 26</p>
 <span class="annotation">*worked out from first principles*</span>
 
 <!-- Introduction -->

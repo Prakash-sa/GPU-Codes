@@ -1,11 +1,11 @@
 ---
-title: "7. What problem do warps solve?"
+title: "Chapter 7: What problem do warps solve?"
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-yellow">What problem do warps solve?</span></h1>
-<p class="bge-meta">Phase 1 · Part 3: Inside the Silicon · Chapter 7 of 56 · notebook date 21 / jun / 26</p>
+<p class="bge-meta">Part 3: Inside the Silicon · Chapter 7 of 56 · notebook date 21 / jun / 26</p>
 <span class="annotation">*worked out from first principles*</span>
 
 <!-- Introduction -->

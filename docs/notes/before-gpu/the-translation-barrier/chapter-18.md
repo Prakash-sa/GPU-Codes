@@ -1,11 +1,11 @@
 ---
-title: "18. Why thread indexing exists"
+title: "Chapter 18: Why thread indexing exists"
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-yellow">Why thread indexing exists</span></h1>
-<p class="bge-meta">Phase 2 · The Translation Barrier · Chapter 18 of 56 · notebook date 06 / jul / 26</p>
+<p class="bge-meta">Part 5: The Translation Barrier · Chapter 18 of 56 · notebook date 06 / jul / 26</p>
 <span class="annotation">*the gps formula*</span>
 
 <!-- Introduction -->

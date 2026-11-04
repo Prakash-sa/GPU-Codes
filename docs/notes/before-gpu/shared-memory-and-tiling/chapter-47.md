@@ -1,11 +1,11 @@
 ---
-title: "47. Compare-and-swap: The universal atomic primitive."
+title: "Chapter 47: Compare-and-swap: The universal atomic primitive."
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-yellow" style="font-size: 0.9em;">Compare-and-swap: The universal atomic primitive.</span></h1>
-<p class="bge-meta">Phase 3 · Shared Memory &amp; Tiling · Chapter 47 of 56 · notebook date 23 / aug / 26</p>
+<p class="bge-meta">Part 13: Shared Memory &amp; Tiling · Chapter 47 of 56 · notebook date 23 / aug / 26</p>
 
 <p style="margin-top: calc(var(--grid-size) * 1.5);">
   The hardware gives you a handful of built-in atomic operations, safe ways for many threads to update the same spot without stepping on each other, like atomic addition. But what happens when you need something the hardware doesn't offer, some custom update that isn't just an add. It turns out there is one primitive underneath all of them, a single operation from which you can build any atomic update you can imagine. It is called compare-and-swap, and understanding it is understanding how threads coordinate at the deepest level, the foundation of nearly all lock-free code.

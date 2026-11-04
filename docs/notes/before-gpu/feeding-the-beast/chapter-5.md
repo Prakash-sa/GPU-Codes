@@ -1,11 +1,11 @@
 ---
-title: "5. Compute-bound vs. memory-bound"
+title: "Chapter 5: Compute-bound vs. memory-bound"
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-yellow">Compute-bound vs. memory-bound</span></h1>
-<p class="bge-meta">Phase 1 · Part 2: Feeding the Beast · Chapter 5 of 56 · notebook date 19 / jun / 26</p>
+<p class="bge-meta">Part 2: Feeding the Beast · Chapter 5 of 56 · notebook date 19 / jun / 26</p>
 <span class="annotation">*worked out from first principles*</span>
 
 <!-- Introduction -->

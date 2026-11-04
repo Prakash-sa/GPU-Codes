@@ -1,11 +1,11 @@
 ---
-title: "39. Why higher occupancy can make performance worse."
+title: "Chapter 39: Why higher occupancy can make performance worse."
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-yellow" style="font-size: 0.9em;">Why higher occupancy can make performance worse.</span></h1>
-<p class="bge-meta">Phase 3 · The Register Physics · Chapter 39 of 56 · notebook date 17 / jul / 26</p>
+<p class="bge-meta">Part 10: The Register Physics · Chapter 39 of 56 · notebook date 17 / jul / 26</p>
 <span class="annotation">*guess and check*</span>
 
 <!-- Section: Introduction -->

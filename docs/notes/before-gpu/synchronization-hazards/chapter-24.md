@@ -1,11 +1,11 @@
 ---
-title: "24. Why race conditions happen"
+title: "Chapter 24: Why race conditions happen"
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-pink">Why race conditions happen</span></h1>
-<p class="bge-meta">Phase 2 · Synchronization &amp; Hazards · Chapter 24 of 56 · notebook date 12 / jul / 26</p>
+<p class="bge-meta">Part 7: Synchronization &amp; Hazards · Chapter 24 of 56 · notebook date 12 / jul / 26</p>
 <span class="annotation">*the lottery*</span>
 
 <!-- Intro -->

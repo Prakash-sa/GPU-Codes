@@ -1,11 +1,11 @@
 ---
-title: "44. What is memory coalescing? 32 threads, 1 transaction vs 32 transactions."
+title: "Chapter 44: What is memory coalescing? 32 threads, 1 transaction vs 32 transactions."
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-yellow" style="font-size: 0.9em;">What is memory coalescing? 32 threads, 1 transaction vs 32 transactions.</span></h1>
-<p class="bge-meta">Phase 3 · Global Memory &amp; Coalescing · Chapter 44 of 56 · notebook date 17 / jul / 26</p>
+<p class="bge-meta">Part 12: Global Memory &amp; Coalescing · Chapter 44 of 56 · notebook date 17 / jul / 26</p>
 <span class="annotation">*the tile*</span>
 
 <!-- Section: Introduction -->

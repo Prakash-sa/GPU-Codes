@@ -1,11 +1,11 @@
 ---
-title: "35. Two hard ceilings. One tells you to fix your math. The other says: fix your memory."
+title: "Chapter 35: Two hard ceilings. One tells you to fix your math. The other says: fix your memory."
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-yellow" style="font-size: 0.9em;">Two hard ceilings. One tells you to fix your math. The other says: fix your memory.</span></h1>
-<p class="bge-meta">Phase 3 · The Memory Wall · Chapter 35 of 56 · notebook date 17 / jul / 26</p>
+<p class="bge-meta">Part 9: The Memory Wall · Chapter 35 of 56 · notebook date 17 / jul / 26</p>
 <span class="annotation">*worked out from first principles*</span>
 
 <!-- Section: Introduction -->

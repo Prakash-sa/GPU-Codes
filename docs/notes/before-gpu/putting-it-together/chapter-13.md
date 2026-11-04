@@ -1,11 +1,11 @@
 ---
-title: "13. What if a GPU had CPU-style caches"
+title: "Chapter 13: What if a GPU had CPU-style caches"
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-yellow">What if a GPU had CPU-style caches</span></h1>
-<p class="bge-meta">Phase 1 · Part 4: Putting it Together · Chapter 13 of 56 · notebook date 27 / jun / 26</p>
+<p class="bge-meta">Part 4: Putting it Together · Chapter 13 of 56 · notebook date 27 / jun / 26</p>
 <span class="annotation">*worked out from first principles*</span>
 
 <!-- Introduction -->

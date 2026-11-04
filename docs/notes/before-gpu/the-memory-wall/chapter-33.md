@@ -1,11 +1,11 @@
 ---
-title: "33. Your ALUs are idle. Memory is the real bottleneck."
+title: "Chapter 33: Your ALUs are idle. Memory is the real bottleneck."
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-yellow">Your ALUs are idle. Memory is the real bottleneck.</span></h1>
-<p class="bge-meta">Phase 3 · The Memory Wall · Chapter 33 of 56 · notebook date 17 / jul / 26</p>
+<p class="bge-meta">Part 9: The Memory Wall · Chapter 33 of 56 · notebook date 17 / jul / 26</p>
 <span class="annotation">*worked out from first principles*</span>
 
 <!-- Section: Introduction -->

@@ -1,11 +1,11 @@
 ---
-title: "12. What is latency hiding"
+title: "Chapter 12: What is latency hiding"
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-yellow">What is latency hiding</span></h1>
-<p class="bge-meta">Phase 1 · Part 4: Putting it Together · Chapter 12 of 56 · notebook date 26 / jun / 26</p>
+<p class="bge-meta">Part 4: Putting it Together · Chapter 12 of 56 · notebook date 26 / jun / 26</p>
 <span class="annotation">*worked out from first principles*</span>
 
 <!-- Introduction -->

@@ -1,11 +1,11 @@
 ---
-title: "8. Why branching is bad on GPUs"
+title: "Chapter 8: Why branching is bad on GPUs"
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-yellow">Why branching is bad on GPUs</span></h1>
-<p class="bge-meta">Phase 1 · Part 3: Inside the Silicon · Chapter 8 of 56 · notebook date 22 / jun / 26</p>
+<p class="bge-meta">Part 3: Inside the Silicon · Chapter 8 of 56 · notebook date 22 / jun / 26</p>
 <span class="annotation">*worked out from first principles*</span>
 
 <!-- Introduction -->

@@ -1,11 +1,11 @@
 ---
-title: "37. Where should data live? The register-occupancy tradeoff."
+title: "Chapter 37: Where should data live? The register-occupancy tradeoff."
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-yellow" style="font-size: 0.9em;">Where should data live? The register-occupancy tradeoff.</span></h1>
-<p class="bge-meta">Phase 3 · The Register Physics · Chapter 37 of 56 · notebook date 17 / jul / 26</p>
+<p class="bge-meta">Part 10: The Register Physics · Chapter 37 of 56 · notebook date 17 / jul / 26</p>
 <span class="annotation">*the art of using fewer bits*</span>
 
 <!-- Section: Introduction -->

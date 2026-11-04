@@ -1,11 +1,11 @@
 ---
-title: "26. Why the GPU context switch is free but CPU's is slow"
+title: "Chapter 26: Why the GPU context switch is free but CPU's is slow"
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-blue">Why the GPU context switch is free but CPU's is slow</span></h1>
-<p class="bge-meta">Phase 2 · Scale &amp; Performance · Chapter 26 of 56 · notebook date 14 / jul / 26</p>
+<p class="bge-meta">Part 8: Scale &amp; Performance · Chapter 26 of 56 · notebook date 14 / jul / 26</p>
 </div>
 
 ## <span class="hl-yellow">The Free Swap</span>

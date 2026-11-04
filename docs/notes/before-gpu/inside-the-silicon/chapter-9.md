@@ -1,11 +1,11 @@
 ---
-title: "9. What is SIMT? (and how it differs from SIMD)"
+title: "Chapter 9: What is SIMT? (and how it differs from SIMD)"
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-yellow">What is SIMT? (and how it differs from SIMD)</span></h1>
-<p class="bge-meta">Phase 1 · Part 3: Inside the Silicon · Chapter 9 of 56 · notebook date 23 / jun / 26</p>
+<p class="bge-meta">Part 3: Inside the Silicon · Chapter 9 of 56 · notebook date 23 / jun / 26</p>
 <span class="annotation">*worked out from first principles*</span>
 
 <!-- Introduction -->

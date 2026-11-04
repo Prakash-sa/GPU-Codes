@@ -1,11 +1,11 @@
 ---
-title: "11. Why AI runs on GPUs but databases don't"
+title: "Chapter 11: Why AI runs on GPUs but databases don't"
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-yellow">Why AI runs on GPUs but databases don't</span></h1>
-<p class="bge-meta">Phase 1 · Part 4: Putting it Together · Chapter 11 of 56 · notebook date 25 / jun / 26</p>
+<p class="bge-meta">Part 4: Putting it Together · Chapter 11 of 56 · notebook date 25 / jun / 26</p>
 <span class="annotation">*worked out from first principles*</span>
 
 <!-- Introduction -->

@@ -1,11 +1,11 @@
 ---
-title: "49. Wave quantization: the hidden cost of the last wave"
+title: "Chapter 49: Wave quantization: the hidden cost of the last wave"
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-yellow" style="font-size: 0.9em;">Wave quantization: the hidden cost of the last wave</span></h1>
-<p class="bge-meta">Phase 3 · GEMM &amp; The Synthesis · Chapter 49 of 56 · notebook date 25 / aug / 26</p>
+<p class="bge-meta">Part 14: GEMM &amp; The Synthesis · Chapter 49 of 56 · notebook date 25 / aug / 26</p>
 <span class="annotation">*the mechanics of batch scheduling*</span>
 
 <!-- Section: Introduction -->

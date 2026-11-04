@@ -1,11 +1,11 @@
 ---
-title: "46. What is predication? Why GPUs refuse to branch."
+title: "Chapter 46: What is predication? Why GPUs refuse to branch."
 ---
 
 <div class="bge">
 <!-- Title -->
 <h1><span class="hl-yellow" style="font-size: 0.9em;">What is predication? Why GPUs refuse to branch.</span></h1>
-<p class="bge-meta">Phase 3 · Shared Memory &amp; Tiling · Chapter 46 of 56 · notebook date 22 / aug / 26</p>
+<p class="bge-meta">Part 13: Shared Memory &amp; Tiling · Chapter 46 of 56 · notebook date 22 / aug / 26</p>
 
 <p style="margin-top: calc(var(--grid-size) * 1.5);">
   There is a clever thing gpus do with small if-else branches that seems to violate common sense. Faced with a branch, the hardware sometimes refuses to branch at all. Instead of choosing a path, it runs both sides for everyone, and then quietly throws away the results nobody wanted. This sounds wasteful, and sometimes it is, but more often it is faster than the alternative, and understanding why teaches you something deep about how a bundle of gpu threads really executes.
