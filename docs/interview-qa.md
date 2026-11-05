@@ -208,6 +208,38 @@ thing, then re-measure. Say the bytes and FLOPs out loud.
 
     See [09. GEMM](leetgpu/09-gemm.md).
 
+??? question "How do you discretize gradient, divergence and the Laplacian? How accurate is it?"
+    Replace each derivative with a central difference along its axis:
+    $\partial_x u \approx (u_{i+1} - u_{i-1})/2h$ and
+    $\partial_{xx} u \approx (u_{i+1} - 2u_i + u_{i-1})/h^2$. The gradient applies the first
+    to each axis, the divergence sums it over the components, and the Laplacian sums the
+    second over the axes (5-point in 2-D, 7-point in 3-D). Both are second order: halving
+    $h$ cuts the error about 4×. Verify that with a manufactured solution in FP64.
+    Fourth-order versions need radius-2 stencils and two ghost layers.
+    ([stencils](notes/12-stencils-and-discretization.md#from-derivatives-to-stencils))
+
+??? question "Why is a 3-D stencil memory bound, and how do you make it fast?"
+    A 7-point Laplacian does ~10–14 FLOPs per 8 bytes (FP32, one read, one write): about
+    1.5 FLOP/byte, against ~20 needed to be compute bound on an H100. So the goal is
+    one DRAM read per point:
+
+    - x is the fastest index, and threads run along x (coalescing);
+    - **2.5-D blocking**: a 2-D tile per block, marching along z with planes k−1, k, k+1
+      in registers (and the centre plane in shared memory in CUDA);
+    - fuse operators and the time update so intermediates never hit DRAM.
+
+    Check DRAM bytes per point in Nsight Compute against the ideal 8.
+    ([stencils](notes/12-stencils-and-discretization.md#making-stencils-fast))
+
+??? question "What is the checkerboard problem, and why use a staggered grid?"
+    On a collocated grid, the divergence of a central-difference gradient is a Laplacian
+    with spacing 2h. It never compares a point with its direct neighbours, so a +1/−1
+    checkerboard has zero gradient and zero div(grad). In pressure–velocity solvers this
+    allows odd-even pressure oscillations. A staggered (MAC) grid puts pressure at cell
+    centres and velocities on faces, so divergence and gradient use compact h-spaced
+    stencils. Collocated codes use Rhie–Chow interpolation instead.
+    ([stencils](notes/12-stencils-and-discretization.md#collocated-vs-staggered-grids))
+
 ??? question "Why is a naive matrix transpose slow, and how do you fix it?"
     Reading rows is coalesced, but writing columns is strided: each write touches a
     different sector. The fix is to stage a tile in shared memory, read it row-wise and
