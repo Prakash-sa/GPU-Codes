@@ -17,6 +17,7 @@ is short, with the mental model first and then the practical rules.
 | 10 | [How GPUs talk to each other](10-multi-gpu-communication.md) | NVLink, NVSwitch, PCIe, InfiniBand, NUMA; NCCL, RCCL, MPI; NVIDIA vs AMD; where data should move |
 | 11 | [Inside AWS GPU instances](11-aws-gpu-instances.md) | How are the GPUs, NVSwitches, CPUs and NICs wired in g6e, p4d, p5, p5en and p6-b200? |
 | 12 | [Gradient, divergence and stencils](12-stencils-and-discretization.md) | How do PDE operators become stencils on 2-D/3-D grids, and how do I make them run at bandwidth? |
+| 13 | [Warp primitives and cooperative groups](13-warp-primitives.md) | Shuffles, votes, match, warp reduce, barriers and fences, cooperative groups and grid sync: how threads share data without memory |
 | — | [Cheat sheet](cheatsheet.md) | Quick lookup |
 
 ### Foundations: why GPUs are built this way

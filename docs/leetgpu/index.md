@@ -126,14 +126,15 @@ docker run --rm -v "$PWD":/w -w /w nvidia/cuda:12.6.3-devel-ubuntu24.04 \
 ```
 
 `cuda_cpu.h` is a deliberately strict CPU stand-in, not a GPU simulator. Each block's
-threads run as real OS threads, `__syncthreads` is a real barrier, and warp shuffles
-exchange values through a per-warp barrier. A missing `__syncthreads`, a shared-memory
+threads run as real OS threads, `__syncthreads` is a real barrier, and warp shuffles,
+votes and match exchange values through a per-warp barrier. A cooperative launch runs
+every block at once so `grid.sync()` is a real grid barrier. A missing `__syncthreads`, a shared-memory
 race or a wrong shuffle therefore gives wrong answers: deleting one `__syncthreads` from
 the transpose or the Jacobi tile, or breaking one step of the scan's shuffle, makes their
 tests fail. It cannot tell you anything about speed, occupancy or tensor cores.
 
 !!! info "What has been verified for CUDA"
-    All 20 `.cu` files (and `notes/stencil_ops.cu`) pass the CPU-emulation tests on the
+    All 20 `.cu` files (and `notes/stencil_ops.cu` and `notes/warp_primitives.cu`) pass the CPU-emulation tests on the
     same cases as the Triton versions, and compile with nvcc 12.6 for sm_75, sm_80 and
     sm_90 with warnings as errors and no register spills. They have **not** been run on
     an NVIDIA GPU yet, so no CUDA timings are quoted; `run_tests.py --gpu` is the first

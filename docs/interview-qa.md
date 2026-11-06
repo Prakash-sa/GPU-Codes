@@ -60,6 +60,45 @@ thing, then re-measure. Say the bytes and FLOPs out loud.
 
     [More detail](notes/01-execution-model.md#function-qualifiers-__global__-__device__-__host__)
 
+??? question "`__shfl_down_sync` vs `__shfl_up_sync` vs `__shfl_xor_sync`: when do you use which?"
+    - **down** (lane *i* reads *i + d*): tree reductions; the result ends in lane 0.
+    - **xor** (lane *i* reads *i ^ m*): butterfly all-reduce; every lane ends with the
+      result, which softmax and layer norm need.
+    - **up** (lane *i* reads *i − d*): prefix sums. Guard the add with `lane >= offset`,
+      because lanes with no source get their own value back.
+    - **indexed** `__shfl_sync(m, v, src)`: broadcast or any permutation.
+
+    All are register-to-register, one instruction per step, with no shared memory and no
+    `__syncthreads`. [More](notes/13-warp-primitives.md#warp-shuffles)
+
+??? question "What is the `mask` in `__shfl_sync` and why did old warp-synchronous code break on Volta?"
+    The mask names the lanes that take part. Every non-exited lane in it must execute the
+    same intrinsic, and a lane may only read from lanes in the mask. Since Volta, lanes
+    have independent program counters and can drift apart. Code that assumed lock-step
+    (for example the `volatile` shared-memory tail of a reduction with no `__syncwarp`)
+    can now read stale values. Fix: use shuffles, or put `__syncwarp()` between a write
+    and the next read. Don't use `0xffffffff` after some lanes have returned or inside a
+    divergent branch; keep tail lanes alive with neutral values instead.
+    [More](notes/13-warp-primitives.md#masks-and-convergence-what-goes-wrong)
+
+??? question "How do you cut 32 atomics per warp down to one?"
+    Warp aggregation. `m = __ballot_sync(FULL, keep)`; lane 0 does
+    `base = atomicAdd(count, __popc(m))`; broadcast `base` with `__shfl_sync`; each lane
+    writes to `base + __popc(m & ((1u << lane) - 1))`. Inside divergent code,
+    `cg::coalesced_threads()` does the same for whichever lanes arrived. For atomics on
+    *different* addresses (a histogram), `__match_any_sync` groups lanes with the same key,
+    and one leader per group adds the group size.
+    [More](notes/13-warp-primitives.md#stream-compaction-and-warp-aggregated-atomics)
+
+??? question "What does `grid.sync()` need, and when is it worth it?"
+    A cooperative launch (`cudaLaunchCooperativeKernel`), a device that supports it, and a
+    grid no larger than can be resident at once (occupancy × SMs), so loop with a
+    grid-stride loop. It suits multi-phase kernels with small phases, where launch
+    overhead dominates or registers and shared state must survive between phases.
+    Otherwise two kernels are simpler. Barrier vs fence: `__syncthreads`/`grid.sync` make
+    threads wait; `__threadfence` only orders the calling thread's writes.
+    [More](notes/13-warp-primitives.md#grid-wide-sync-gridsync)
+
 ??? question "Grid, block, thread: how do you choose the launch configuration?"
     - **Block size:** a multiple of 32, usually 128–512. Enough warps per SM to hide
       latency, without exceeding the register or shared-memory budget.

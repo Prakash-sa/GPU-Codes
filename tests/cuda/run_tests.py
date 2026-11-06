@@ -55,7 +55,7 @@ def _split_top(s):
 
 def to_cpp(src):
     """CUDA source -> C++ for the CPU emulator."""
-    src = re.sub(r"#include\s*<cuda(_runtime|_fp16)?\.h>\s*\n", "", src)
+    src = re.sub(r"#include\s*<(cuda(_runtime|_fp16)?\.h|cooperative_groups(/\w+)?\.h)>\s*\n", "", src)
     out, i = [], 0
     while (k := src.find("<<<", i)) >= 0:
         j, depth = k, 0                                   # walk back over name<template args>
@@ -111,7 +111,8 @@ def check(name, got, want, atol, rtol):
     got, want = got.double(), want.double()
     err = (got - want).abs()
     ok = bool((err <= atol + rtol * want.abs()).all()) and got.shape == want.shape
-    print(f"  {'ok  ' if ok else 'FAIL'} {name:40s} max abs err {err.max().item():.2e}")
+    worst = err.max().item() if err.numel() else 0.0
+    print(f"  {'ok  ' if ok else 'FAIL'} {name:40s} max abs err {worst:.2e}")
     if not ok:
         FAILED.append(name)
 
@@ -396,7 +397,110 @@ def stencil(lib):
         check(f"lap3d  {nz}x{ny}x{nx}", out[1:-1, 1:-1, 1:-1], want, 1e-4, 1e-4)
 
 
+def warp(lib):
+    """notes/warp_primitives.cu: shuffles, votes, match, reduce, cooperative groups."""
+    U = ctypes.c_uint
+    ws = fn(lib, "warp_sums", P, P, I)
+    wm = fn(lib, "warp_max", P, P, I)
+    sb = fn(lib, "segment_broadcast", P, P, I, I)
+    sc = fn(lib, "warp_scan", P, P, I, I)
+    bs = fn(lib, "block_scan", P, P, I)
+    vo = fn(lib, "warp_votes", P, P, P, P, I)
+    cp = fn(lib, "compact_positive", P, P, P, I)
+    hm = fn(lib, "histogram_match", P, P, I, I)
+    im = fn(lib, "int_sum_max", P, P, P, I)
+    cpos = fn(lib, "count_positive", P, P, I)
+    cbs = fn(lib, "cg_block_sum", P, P, I)
+    cts = fn(lib, "cg_tile_scan", P, P, P, I)
+    nz = fn(lib, "normalize_by_sum", P, P, I)
+
+    def pad(t, m, value):                               # pad to a multiple of m, view as rows
+        k = (-t.numel()) % m
+        return torch.cat([t, torch.full((k,), value, dtype=t.dtype)]).view(-1, m)
+
+    def seg_scan(t, w):
+        return torch.cat([c.cumsum(0) for c in t.split(w)]).to(t.dtype)
+
+    for n in [1, 31, 32, 33, 1000, 4099]:
+        x = torch.randn(n)
+        out = torch.zeros((n + 31) // 32)
+        ws(ptr(x), ptr(out), n)
+        check(f"shfl_down warp sums n={n}", out, pad(x, 32, 0.0).sum(1), 1e-5, 1e-5)
+
+        out = torch.zeros(n)
+        wm(ptr(x), ptr(out), n)
+        check(f"shfl_xor warp max (all lanes) n={n}", out,
+              pad(x, 32, -math.inf).amax(1).repeat_interleave(32)[:n], 0, 0)
+
+        for w in [4, 8, 32]:
+            sb(ptr(x), ptr(out), n, w)
+            check(f"shfl width={w} broadcast n={n}", out, x[(torch.arange(n) // w) * w], 0, 0)
+
+        xi = torch.randint(-5, 6, (n,), dtype=torch.int32)
+        oi = torch.zeros(n, dtype=torch.int32)
+        for w in [8, 32]:
+            sc(ptr(xi), ptr(oi), n, w)
+            check(f"shfl_up scan width={w} n={n}", oi, seg_scan(xi, w), 0, 0)
+
+        bs(ptr(xi), ptr(oi), n)
+        check(f"block scan n={n}", oi, xi.cumsum(0).to(torch.int32), 0, 0)
+
+        nw = (n + 31) // 32
+        xv = torch.randn(n).abs() + 0.1
+        xv[torch.rand(n) < 0.02] *= -1                  # a few negatives
+        xv[: min(n, 32)] = xv[: min(n, 32)].abs()       # first warp: all positive
+        an, al = torch.zeros(nw, dtype=torch.int32), torch.zeros(nw, dtype=torch.int32)
+        bal = torch.zeros(nw, dtype=torch.int32)
+        vo(ptr(xv), ptr(an), ptr(al), ptr(bal), n)
+        rows = pad(xv, 32, 1.0)
+        check(f"any_sync n={n}", an, (rows < 0).any(1).int(), 0, 0)
+        check(f"all_sync n={n}", al, (rows > 0).all(1).int(), 0, 0)
+        bits = (pad(xv > 0, 32, False).long() << torch.arange(32)).sum(1)
+        bits = torch.where(bits >= 2 ** 31, bits - 2 ** 32, bits).int()
+        check(f"ballot_sync n={n}", bal, bits, 0, 0)
+
+        out, cnt = torch.zeros(n), torch.zeros(1, dtype=torch.int32)
+        cp(ptr(x), ptr(out), ptr(cnt), n)
+        k = int(cnt.item())
+        want = x[x > 0]
+        check(f"ballot+popc compaction count n={n}", cnt, torch.tensor([want.numel()]), 0, 0)
+        check(f"ballot+popc compaction values n={n}", out[:k].sort().values, want.sort().values, 0, 0)
+
+        nb = 16
+        b = (torch.randn(n).abs() * 3).long().clamp(max=nb - 1).int()   # skewed: low bins common
+        h = torch.zeros(nb, dtype=torch.int32)
+        hm(ptr(b), ptr(h), n, nb)
+        check(f"match_any histogram n={n}", h, torch.bincount(b, minlength=nb).int(), 0, 0)
+
+        su, mx = torch.zeros(1, dtype=torch.int32), torch.zeros(1, dtype=torch.int32)
+        xr = torch.randint(-1000, 1000, (n,), dtype=torch.int32)
+        im(ptr(xr), ptr(su), ptr(mx), n)
+        check(f"reduce_add_sync n={n}", su, xr.sum().reshape(1).int(), 0, 0)
+        check(f"reduce_max_sync n={n}", mx, xr.max().reshape(1), 0, 0)
+
+        nbk = (n + 255) // 256
+        pb = torch.zeros(nbk, dtype=torch.int32)
+        cpos(ptr(x), ptr(pb), n)
+        check(f"syncthreads_count n={n}", pb, pad(x > 0, 256, False).sum(1).int(), 0, 0)
+
+        pf = torch.zeros(nbk)
+        cbs(ptr(x), ptr(pf), n)
+        check(f"cg::reduce block sums n={n}", pf, pad(x, 256, 0.0).sum(1), 1e-4, 1e-5)
+
+        inc, exc = torch.zeros(n, dtype=torch.int32), torch.zeros(n, dtype=torch.int32)
+        cts(ptr(xi), ptr(inc), ptr(exc), n)
+        check(f"cg::inclusive_scan tile16 n={n}", inc, seg_scan(xi, 16), 0, 0)
+        check(f"cg::exclusive_scan tile16 n={n}", exc, seg_scan(xi, 16) - xi, 0, 0)
+
+    for n in [1, 1000, 100_003]:
+        x = torch.rand(n) + 0.5
+        y = torch.zeros(n)
+        nz(ptr(x), ptr(y), n)
+        check(f"grid.sync normalize n={n}", y, x / x.double().sum(), 1e-6, 1e-4)
+
+
 TESTS = {f"{n:02d}": globals()[f"t{n:02d}"] for n in range(1, 21)}
+EXTRA = {"stencil_ops": stencil, "warp_primitives": warp}
 
 
 def main():
@@ -405,12 +509,12 @@ def main():
         torch.set_default_device("cuda")                 # every test tensor lives on the GPU
     args = [a for a in sys.argv[1:] if a != "--gpu"]
     pattern = args[0] if args else ""
-    files = sorted((ROOT / "docs" / "leetgpu").glob("[0-9][0-9]_*.cu")) + [ROOT / "docs" / "notes" / "stencil_ops.cu"]
+    files = sorted((ROOT / "docs" / "leetgpu").glob("[0-9][0-9]_*.cu")) + [ROOT / "docs" / "notes" / f"{k}.cu" for k in EXTRA]
     for cu in files:
         if pattern not in cu.name:
             continue
         print(cu.relative_to(ROOT))
-        test = stencil if cu.stem == "stencil_ops" else TESTS[cu.name[:2]]
+        test = EXTRA.get(cu.stem) or TESTS[cu.name[:2]]
         test(build(cu))
     print(f"\n{len(FAILED)} failed" + (": " + ", ".join(FAILED) if FAILED else ""))
     sys.exit(1 if FAILED else 0)

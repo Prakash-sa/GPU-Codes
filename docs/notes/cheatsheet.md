@@ -47,11 +47,16 @@ Query them at runtime with `cudaGetDeviceProperties` or `deviceQuery`.
 |---|---|
 | Block barrier | `__syncthreads()` |
 | Warp barrier | `__syncwarp(mask)` |
-| Warp shuffle | `__shfl_sync`, `__shfl_down_sync`, `__shfl_xor_sync` |
-| Warp vote | `__ballot_sync`, `__any_sync`, `__all_sync` |
+| Warp shuffle | `__shfl_sync`, `__shfl_up_sync`, `__shfl_down_sync`, `__shfl_xor_sync` |
+| Warp vote | `__ballot_sync`, `__any_sync`, `__all_sync`, `__activemask` |
+| Warp match (sm_70+) | `__match_any_sync`, `__match_all_sync` |
+| Warp integer reduce (sm_80+) | `__reduce_add_sync`, `__reduce_min_sync`, `__reduce_max_sync`, `__reduce_and/or/xor_sync` |
+| Block barrier + vote | `__syncthreads_count`, `__syncthreads_and`, `__syncthreads_or` |
+| Bit tricks | `__popc`, `__ffs`, `__clz`, `__brev` |
+| Cooperative groups | `this_thread_block`, `tiled_partition<N>`, `coalesced_threads`, `this_grid`, `cg::reduce`, `cg::inclusive_scan` |
 | Atomics | `atomicAdd`, `atomicCAS`, `atomicMax`, `atomicExch` |
 | Read-only load | `__ldg(ptr)` |
-| Memory fence | `__threadfence()`, `__threadfence_block()` |
+| Memory fence | `__threadfence_block()`, `__threadfence()`, `__threadfence_system()` |
 
 ## nvcc flags
 

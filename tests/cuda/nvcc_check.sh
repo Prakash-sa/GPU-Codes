@@ -10,7 +10,7 @@ set -uo pipefail
 arch=(-gencode arch=compute_75,code=sm_75 -gencode arch=compute_80,code=sm_80
       -gencode arch=compute_90,code=sm_90)
 status=0
-for f in docs/leetgpu/[0-9][0-9]_*.cu docs/notes/stencil_ops.cu; do
+for f in docs/leetgpu/[0-9][0-9]_*.cu docs/notes/stencil_ops.cu docs/notes/warp_primitives.cu; do
     log=$(nvcc -std=c++17 -O3 "${arch[@]}" -Werror all-warnings -Xcompiler -Wall,-Werror \
                -Xptxas -v,-warn-spills -c "$f" -o /tmp/check.o 2>&1)
     rc=$?
