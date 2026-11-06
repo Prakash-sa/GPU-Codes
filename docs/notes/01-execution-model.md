@@ -32,6 +32,141 @@ saxpy<<<blocks, threads>>>(n, 2.0f, d_x, d_y);
 cudaDeviceSynchronize();                              // wait + surface errors
 ```
 
+## Function qualifiers: `__global__`, `__device__`, `__host__`
+
+A qualifier on a function says two things: **where it runs** (CPU or GPU) and **who may
+call it**. nvcc splits a `.cu` file along these lines: host code goes to the normal C++
+compiler, device code is compiled to PTX/SASS for the GPU.
+
+| Qualifier | Runs on | Called from | Returns | Typical use |
+|---|---|---|---|---|
+| `__global__` | GPU | CPU, with `kernel<<<grid, block>>>(...)`; also GPU code under dynamic parallelism | `void` only | The kernel: the entry point every thread runs |
+| `__device__` | GPU | GPU code only (kernels and other `__device__` functions) | Anything | Helpers inside kernels: `warp_sum`, `block_sum`, math |
+| `__host__` | CPU | CPU code only | Anything | Ordinary C++; the default when no qualifier is written |
+| `__host__ __device__` | Both | Both | Anything | One function compiled twice: shared math for the CPU reference and the kernel |
+
+```mermaid
+flowchart LR
+    subgraph CPU["Host (CPU)"]
+        H["__host__ solve()<br/>allocates, copies, launches"]
+        HD1["__host__ __device__ f()<br/>CPU copy"]
+    end
+    subgraph GPU["Device (GPU)"]
+        K["__global__ kernel()<br/>one instance per thread"]
+        D["__device__ helper()"]
+        HD2["__host__ __device__ f()<br/>GPU copy"]
+    end
+    H -- "kernel#60;#60;#60;grid, block#62;#62;#62;(...)<br/>asynchronous" --> K
+    H -- "plain call" --> HD1
+    K -- "plain call" --> D
+    K -- "plain call" --> HD2
+    D -- "plain call" --> HD2
+    K -. "dynamic parallelism<br/>(-rdc=true)" .-> K
+    D -. "✗ cannot call" .-> H
+```
+
+*Solid arrows are allowed calls. The only way across the CPU → GPU boundary is a kernel
+launch; there is no way back except the kernel finishing and the host synchronizing.*
+
+All four in one file:
+
+```cpp
+#include <cuda_runtime.h>
+
+__host__ __device__ inline float axpy(float a, float x, float y) {   // CPU and GPU
+    return a * x + y;
+}
+
+__device__ float clamp01(float v) {                                  // GPU helper
+    return fminf(fmaxf(v, 0.0f), 1.0f);
+}
+
+__global__ void saxpy_clamped(int n, float a, const float* x, float* y) {   // kernel
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i < n) y[i] = clamp01(axpy(a, x[i], y[i]));
+}
+
+void solve(int n, float a, const float* d_x, float* d_y) {           // __host__ by default
+    int threads = 256, blocks = (n + threads - 1) / threads;
+    saxpy_clamped<<<blocks, threads>>>(n, a, d_x, d_y);              // returns at once
+    cudaDeviceSynchronize();
+}
+
+float cpu_reference(float a, float x, float y) {                     // reuses axpy on the CPU
+    return axpy(a, x, y);
+}
+```
+
+`solve` expects `d_x` and `d_y` to be device pointers (from `cudaMalloc`). Passing a
+host pointer compiles fine and fails at run time with an illegal-address error. Every
+[LeetGPU CUDA solution](../leetgpu/index.md) follows this shape:
+`extern "C" void solve(...)` is a host function (the `extern "C"` only switches off C++
+name mangling), it launches one or more `__global__` kernels, and those call `__device__`
+helpers such as `warp_sum` in [the reduction](../leetgpu/03_reduction.cu).
+
+### Rules worth remembering
+
+**`__global__` (kernels)**
+
+- Must return `void`; results go out through pointer arguments.
+- Arguments are copied by value into constant memory at launch. Pass device pointers,
+  not host pointers, references or `std::vector`.
+- A launch is **asynchronous** and returns no error code itself: check with
+  `cudaGetLastError()` right after the launch (bad configuration) and with the next
+  synchronizing call (faults during execution). See [Error checking](#error-checking).
+- Cannot be a class member function; can be a template.
+
+**`__device__` (GPU helpers)**
+
+- Called with ordinary function syntax; can return values, take references, recurse.
+- Usually inlined by the compiler, so a small helper costs nothing. `__forceinline__`
+  and `__noinline__` override that choice.
+- Can only call other device code. Most of the C++ standard library is host-only;
+  `printf`, `malloc`/`free`, and the CUDA math functions (`sinf`, `fmaf`, …) work on the
+  device.
+- Calling a `__device__` function defined in **another** `.cu` file needs separate
+  compilation: `nvcc -rdc=true`.
+
+**`__host__` (CPU code)**
+
+- The default, so it is almost never written alone. It matters only in the combination
+  `__host__ __device__`.
+- It is the only side that can allocate device memory (`cudaMalloc`), copy
+  (`cudaMemcpy`) and launch kernels, apart from dynamic parallelism.
+
+**`__host__ __device__` (both)**
+
+- Compiled once for each side, so the body may only use what both sides support.
+- Inside it, `#ifdef __CUDA_ARCH__` is true only in the GPU copy, which lets one function
+  take a different path on each side:
+
+```cpp
+__host__ __device__ int lane_or_zero() {
+#ifdef __CUDA_ARCH__
+    return threadIdx.x & 31;      // GPU build
+#else
+    return 0;                     // CPU build: no threads here
+#endif
+}
+```
+
+### The same words on variables mean something else
+
+On a function, `__device__` means "runs on the GPU". On a **variable**, the qualifiers
+choose a memory space:
+
+| Variable qualifier | Lives in | Lifetime | Visible to |
+|---|---|---|---|
+| (none, inside a kernel) | Registers (or local memory if spilled) | One thread | That thread |
+| `__shared__` | Shared memory on the SM | One block | Threads of that block |
+| `__device__` | Global memory (HBM) | The program | All threads; host via `cudaMemcpyToSymbol` |
+| `__constant__` | Constant memory (cached, read-only on GPU) | The program | All threads; host writes with `cudaMemcpyToSymbol` |
+| `__managed__` | Unified memory | The program | Host and device, migrated on demand |
+
+`cudaMalloc` is the usual way to get global memory at run time; a `__device__` variable
+is the static, file-scope version of the same thing. See
+[Memory hierarchy](02-memory-hierarchy.md).
+
 ## The thread hierarchy
 
 ![Grid of blocks, block of warps, warp of threads](../assets/img/thread-hierarchy.png)

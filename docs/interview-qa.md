@@ -44,6 +44,22 @@ thing, then re-measure. Say the bytes and FLOPs out loud.
 
     Divergence *between* warps costs nothing.
 
+??? question "What is the difference between `__global__`, `__device__` and `__host__`?"
+    | | Runs on | Called from | Returns |
+    |---|---|---|---|
+    | `__global__` | GPU | CPU via `<<<grid, block>>>` (or GPU with dynamic parallelism) | `void` only |
+    | `__device__` | GPU | GPU code only | anything |
+    | `__host__` | CPU | CPU code only (the default) | anything |
+
+    - `__host__ __device__` compiles the function for both sides; `__CUDA_ARCH__` tells
+      the two copies apart.
+    - CPU code can't call a `__device__` function; the only way onto the GPU is a launch,
+      and launches are asynchronous.
+    - On a *variable*, `__device__` means "lives in global memory", not "runs on the GPU";
+      `__shared__` and `__constant__` pick other memory spaces.
+
+    [More detail](notes/01-execution-model.md#function-qualifiers-__global__-__device__-__host__)
+
 ??? question "Grid, block, thread: how do you choose the launch configuration?"
     - **Block size:** a multiple of 32, usually 128–512. Enough warps per SM to hide
       latency, without exceeding the register or shared-memory budget.
