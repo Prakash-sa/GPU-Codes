@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Question** | *Vector Addition* (easy) on [LeetGPU](https://leetgpu.com/challenges) · [official spec and reference](https://github.com/AlphaGPU/leetgpu-challenges/tree/main/challenges/easy/1_vector_add) |
-| **Solution** | [01_vector_add.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/01_vector_add.py) |
+| **Solution** | [01_vector_add.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/01_vector_add.py) (Triton) · [01_vector_add.cu](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/01_vector_add.cu) (CUDA C++) |
 | **Task** | `C = A + B`, float32, 1 ≤ N ≤ 100M; perf N = 25M; tolerance 1e-5 |
 | **Bound by** | memory bandwidth (1 FLOP per 12 bytes) |
 
@@ -17,9 +17,21 @@ transaction. The last block is partial, so every load and store is **masked**.
 
 ## Code
 
-```python
---8<-- "docs/leetgpu/01_vector_add.py"
-```
+=== "Triton"
+
+    ```python
+    --8<-- "docs/leetgpu/01_vector_add.py"
+    ```
+
+=== "CUDA C++"
+
+    ```cuda
+    --8<-- "docs/leetgpu/01_vector_add.cu"
+    ```
+
+    Same bandwidth ceiling as the Triton version. Each thread moves a `float4` (16 bytes)
+    per input, so a warp issues one 512-byte access per array, and a grid-stride loop lets
+    a fixed grid cover any N. The last `N % 4` elements take a scalar path.
 
 ## Why it is already near the limit
 

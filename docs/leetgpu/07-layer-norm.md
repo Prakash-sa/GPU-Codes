@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Question** | *Layer Normalization* (medium) on [LeetGPU](https://leetgpu.com/challenges) · [official spec and reference](https://github.com/AlphaGPU/leetgpu-challenges/tree/main/challenges/medium/113_layer_normalization) |
-| **Solution** | [07_layer_norm.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/07_layer_norm.py) |
+| **Solution** | [07_layer_norm.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/07_layer_norm.py) (Triton) · [07_layer_norm.cu](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/07_layer_norm.cu) (CUDA C++) |
 | **Task** | per row of `N × C`: $(x-\mu)/\sqrt{\sigma^2+\epsilon}\cdot w + b$, biased variance; N ≤ 65,536, C ≤ 4096; perf 65536 × 512; tolerance 1e-4 |
 | **Bound by** | memory bandwidth |
 
@@ -23,9 +23,22 @@ from a `[BLOCK_M, BLOCK_C]` register tile (~4K elements):
 
 ## Code
 
-```python
---8<-- "docs/leetgpu/07_layer_norm.py"
-```
+=== "Triton"
+
+    ```python
+    --8<-- "docs/leetgpu/07_layer_norm.py"
+    ```
+
+=== "CUDA C++"
+
+    ```cuda
+    --8<-- "docs/leetgpu/07_layer_norm.cu"
+    ```
+
+    One **warp per row**: for C ≤ 512 the row sits in registers (16 floats per lane), and
+    both reductions are warp shuffles, so there is no shared memory and no
+    `__syncthreads`. Longer rows re-read x from L1/L2. Centred variance, as in the Triton
+    version.
 
 ## Performance
 

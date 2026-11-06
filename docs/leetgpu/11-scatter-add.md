@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Question** | *Scatter Add* (medium) on [LeetGPU](https://leetgpu.com/challenges) · [official spec and reference](https://github.com/AlphaGPU/leetgpu-challenges/tree/main/challenges/medium/125_scatter_add) |
-| **Solution** | [11_scatter_add.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/11_scatter_add.py) |
+| **Solution** | [11_scatter_add.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/11_scatter_add.py) (Triton) · [11_scatter_add.cu](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/11_scatter_add.cu) (CUDA C++) |
 | **Task** | `output[index[i], :] += src[i, :]`; src N × D float32, index int32; perf N = 1M, D = 128, M = 50K; tolerance 1e-4 |
 | **Bound by** | bandwidth (reading src), plus atomic contention when many rows hit the same target |
 
@@ -35,9 +35,22 @@ Details in the atomic kernel:
 
 ## Code
 
-```python
---8<-- "docs/leetgpu/11_scatter_add.py"
-```
+=== "Triton"
+
+    ```python
+    --8<-- "docs/leetgpu/11_scatter_add.py"
+    ```
+
+=== "CUDA C++"
+
+    ```cuda
+    --8<-- "docs/leetgpu/11_scatter_add.cu"
+    ```
+
+    One `atomicAdd` per element, with consecutive threads on consecutive columns of a row,
+    so a warp's atomics hit 32 adjacent addresses (resolved in L2). `cudaMemset` clears
+    the output first. Not bit-reproducible; the sorted, deterministic variant is in the
+    Triton file.
 
 ## Performance
 

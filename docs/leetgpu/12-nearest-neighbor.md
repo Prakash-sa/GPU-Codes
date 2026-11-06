@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Question** | *Nearest Neighbor* (medium) on [LeetGPU](https://leetgpu.com/challenges) · [official spec and reference](https://github.com/AlphaGPU/leetgpu-challenges/tree/main/challenges/medium/38_nearest_neighbor) |
-| **Solution** | [12_nearest_neighbor.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/12_nearest_neighbor.py) |
+| **Solution** | [12_nearest_neighbor.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/12_nearest_neighbor.py) (Triton) · [12_nearest_neighbor.cu](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/12_nearest_neighbor.cu) (CUDA C++) |
 | **Task** | for each point, the index j ≠ i of the closest point; N ≤ 100K; perf N = 10K; **exact match** (atol = 0) |
 | **Bound by** | FP32 compute ($O(N^2)$ distance evaluations) |
 
@@ -29,9 +29,22 @@ The test includes 300 identical points, which are all ties.
 
 ## Code
 
-```python
---8<-- "docs/leetgpu/12_nearest_neighbor.py"
-```
+=== "Triton"
+
+    ```python
+    --8<-- "docs/leetgpu/12_nearest_neighbor.py"
+    ```
+
+=== "CUDA C++"
+
+    ```cuda
+    --8<-- "docs/leetgpu/12_nearest_neighbor.cu"
+    ```
+
+    Points are staged through shared memory in tiles, one query per thread. To match
+    `argmin` exactly on near-ties, the squared distance uses `__fmul_rn` / `__fadd_rn`,
+    which the compiler may not fuse into FMAs (an FMA rounds once instead of twice and can
+    flip a tie).
 
 ## Performance
 

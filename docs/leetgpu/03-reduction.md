@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Question** | *Reduction* (medium) on [LeetGPU](https://leetgpu.com/challenges) · [official spec and reference](https://github.com/AlphaGPU/leetgpu-challenges/tree/main/challenges/medium/4_reduction) |
-| **Solution** | [03_reduction.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/03_reduction.py) |
+| **Solution** | [03_reduction.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/03_reduction.py) (Triton) · [03_reduction.cu](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/03_reduction.cu) (CUDA C++) |
 | **Task** | `output[0] = sum(input)`, float32, N ≤ 100M; perf N = 4,194,304; tolerance 1e-5 vs a float64 reference |
 | **Bound by** | bandwidth at large N; launch overhead at the perf size on H100 |
 
@@ -25,9 +25,21 @@ two ways to do it:
 
 ## Code
 
-```python
---8<-- "docs/leetgpu/03_reduction.py"
-```
+=== "Triton"
+
+    ```python
+    --8<-- "docs/leetgpu/03_reduction.py"
+    ```
+
+=== "CUDA C++"
+
+    ```cuda
+    --8<-- "docs/leetgpu/03_reduction.cu"
+    ```
+
+    Warp shuffles (`__shfl_xor_sync`) reduce inside each warp, one shared-memory step
+    combines the warps, and a fixed grid of 4 × SM-count blocks writes partials. One block
+    then adds them in double. No atomics, so the result is bit-reproducible.
 
 ## Accuracy
 

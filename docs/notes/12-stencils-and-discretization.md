@@ -2,7 +2,7 @@
 
 How the operators of a PDE (gradient, divergence, Laplacian, curl) become **stencils** on
 a grid, how to lay out and index multi-dimensional fields, what a stencil costs on a GPU,
-and how to make it run near memory bandwidth. A tested Triton implementation is at the end.
+and how to make it run near memory bandwidth. Tested Triton and CUDA C++ implementations are at the end.
 Halo exchange across GPUs is on [Multi-GPU](05-multi-gpu.md#domain-decomposition-and-halos),
 and a single 2-D Jacobi kernel is worked through on
 [LeetGPU 14](../leetgpu/14-jacobi-stencil-2d.md).
@@ -195,7 +195,7 @@ update the interior while it is in flight
 Keep the exchange on NVLink where you can
 ([how GPUs talk to each other](10-multi-gpu-communication.md)).
 
-## Code: gradient, divergence and Laplacian in Triton
+## Code: gradient, divergence and Laplacian in Triton and CUDA
 
 `stencil_ops.py` implements a 2-D gradient, a 2-D divergence and a 3-D 7-point Laplacian
 with 2.5-D blocking. It also has ghost-cell fills for periodic, Dirichlet and Neumann
@@ -209,9 +209,24 @@ boundaries, and four tests:
 4. **The checkerboard pitfall:** div(grad u) is blind to the checkerboard, while the
    compact Laplacian isn't.
 
-```python
---8<-- "docs/notes/stencil_ops.py"
-```
+=== "Triton"
+
+    ```python
+    --8<-- "docs/notes/stencil_ops.py"
+    ```
+
+=== "CUDA C++"
+
+    ```cuda
+    --8<-- "docs/notes/stencil_ops.cu"
+    ```
+
+    The same three operators and ghost-cell convention. `lap3d_kernel` is the classic
+    CUDA form of 2.5-D blocking: the centre plane and its x-y halo sit in shared memory
+    for the in-plane neighbours, and the planes below and above sit in registers, so each
+    plane is read from DRAM once. It is tested against the same PyTorch references by
+    `tests/cuda/run_tests.py`
+    ([running the CUDA versions](../leetgpu/index.md#running-the-cuda-versions)).
 
 Output under the Triton interpreter (CPU, `TRITON_INTERPRET=1`); on a CUDA GPU it also
 prints effective bandwidth:

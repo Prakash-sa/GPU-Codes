@@ -21,11 +21,11 @@ GPU stacks) and a GPU hardware reference sheet.
 | [9. Optimization strategies](docs/notes/09-optimization-strategies.md) | Bottleneck diagnosis and fixes for memory-, latency-, compute- and launch-bound code, multi-GPU |
 | [10. How GPUs talk to each other](docs/notes/10-multi-gpu-communication.md) | NVLink, NVSwitch, PCIe, InfiniBand, Infinity Fabric, NUMA; NCCL, RCCL, MPI, NVSHMEM; NVIDIA vs AMD; where data should and shouldn't move |
 | [11. Inside AWS GPU instances](docs/notes/11-aws-gpu-instances.md) | Wiring diagrams for g6e.2xlarge, p5.4xlarge, p4d, p5, p5en (H200) and p6-b200: NVLink/NVSwitch, PCIe, NUMA, EFA |
-| [12. Gradient, divergence and stencils](docs/notes/12-stencils-and-discretization.md) | Finite differences, multi-dimensional layout, ghost cells, staggered grids, cost model, 2.5-D blocking; tested Triton kernels |
+| [12. Gradient, divergence and stencils](docs/notes/12-stencils-and-discretization.md) | Finite differences, multi-dimensional layout, ghost cells, staggered grids, cost model, 2.5-D blocking; tested Triton and CUDA C++ kernels |
 | [Interview Q&A](docs/interview-qa.md) | GPU, ML-systems and multi-GPU interview questions with short answers |
 | [Before GPU Engineering](docs/notes/before-gpu/index.md) | 56-chapter first-principles notebook on GPU hardware by Ranjan Yadav (MIT), imported into the notes |
 | [Cheat sheet](docs/notes/cheatsheet.md) | Quick reference of APIs, limits and formulas |
-| [LeetGPU solutions (Triton)](docs/leetgpu/index.md) | 20 challenges: one `.py` (kernel + `solve()` + tests) and one `.md` (explanation, T4 vs H100, profiling, scaling, videos) each. See also [benchmark, profile, scale](docs/leetgpu/benchmarking.md) |
+| [LeetGPU solutions (Triton + CUDA)](docs/leetgpu/index.md) | 20 challenges: one `.py` (Triton kernel + `solve()` + tests), one `.cu` (CUDA C++ `solve()`) and one `.md` (explanation, T4 vs H100, profiling, scaling, videos) each. See also [benchmark, profile, scale](docs/leetgpu/benchmarking.md) |
 
 ## Building locally
 
@@ -43,7 +43,14 @@ pip install torch triton
 python docs/leetgpu/05_softmax.py                     # tests + benchmark on a CUDA GPU
 PROFILE=1 python docs/leetgpu/05_softmax.py           # + torch.profiler table and trace
 TRITON_INTERPRET=1 python docs/leetgpu/05_softmax.py  # no GPU: kernels run on the CPU
+
+python tests/cuda/run_tests.py --gpu 05_softmax       # CUDA version: build with nvcc, test on the GPU
 ```
+
+Without a GPU, the CUDA versions are tested in Docker: `tests/cuda/run_tests.py` runs them
+on the CPU through `tests/cuda/cuda_cpu.h`, and `tests/cuda/nvcc_check.sh` compiles them
+with the real nvcc for sm_75/80/90. See
+[Running the CUDA versions](docs/leetgpu/index.md#running-the-cuda-versions).
 
 ## Regenerating the figures
 

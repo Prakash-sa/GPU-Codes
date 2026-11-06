@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Question** | *RMS Norm Backward* (medium) on [LeetGPU](https://leetgpu.com/challenges) · [official spec and reference](https://github.com/AlphaGPU/leetgpu-challenges/tree/main/challenges/medium/142_rms_norm_backward) |
-| **Solution** | [19_rms_norm_backward.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/19_rms_norm_backward.py) |
+| **Solution** | [19_rms_norm_backward.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/19_rms_norm_backward.py) (Triton) · [19_rms_norm_backward.cu](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/19_rms_norm_backward.cu) (CUDA C++) |
 | **Task** | given x, w, dy, compute dx and dw; N ≤ 65,536, C ≤ 16,384; perf 16384 × 4096; tolerance 1e-3 |
 | **Bound by** | memory bandwidth |
 
@@ -32,9 +32,22 @@ There are no atomics, so dw is bitwise reproducible. The extra traffic, P × C f
 
 ## Code
 
-```python
---8<-- "docs/leetgpu/19_rms_norm_backward.py"
-```
+=== "Triton"
+
+    ```python
+    --8<-- "docs/leetgpu/19_rms_norm_backward.py"
+    ```
+
+=== "CUDA C++"
+
+    ```cuda
+    --8<-- "docs/leetgpu/19_rms_norm_backward.cu"
+    ```
+
+    A persistent grid (2 × SM-count blocks) takes rows round-robin. Row reductions use
+    shuffles plus shared memory; for the column reduction each thread owns its columns of
+    the block's partial-dw row, so there are no atomics. A second kernel sums the partial
+    rows in a fixed order.
 
 ## Performance
 

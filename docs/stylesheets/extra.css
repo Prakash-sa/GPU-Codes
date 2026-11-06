@@ -317,6 +317,12 @@ body {
   background-color: var(--ink-green);
 }
 
+/* Code tabs (Triton / CUDA C++): labels in the notebook's label font. */
+.md-typeset .tabbed-labels > label {
+  font-family: "Space Mono", monospace;
+  font-size: 0.7rem;
+}
+
 /* Figures (matplotlib PNGs) sit on paper cards so they read in both schemes. */
 .md-typeset img {
   border-radius: 4px;

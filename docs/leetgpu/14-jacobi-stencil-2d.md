@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Question** | *2D Jacobi Stencil* (medium) on [LeetGPU](https://leetgpu.com/challenges) · [official spec and reference](https://github.com/AlphaGPU/leetgpu-challenges/tree/main/challenges/medium/69_jacobi_stencil_2d) |
-| **Solution** | [14_jacobi_stencil_2d.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/14_jacobi_stencil_2d.py) |
+| **Solution** | [14_jacobi_stencil_2d.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/14_jacobi_stencil_2d.py) (Triton) · [14_jacobi_stencil_2d.cu](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/14_jacobi_stencil_2d.cu) (CUDA C++) |
 | **Task** | interior: average of 4 neighbours; boundary: copy; up to 16,384²; perf 8192²; tolerance 1e-5 |
 | **Bound by** | memory bandwidth |
 
@@ -22,9 +22,21 @@ coalesced access.
 
 ## Code
 
-```python
---8<-- "docs/leetgpu/14_jacobi_stencil_2d.py"
-```
+=== "Triton"
+
+    ```python
+    --8<-- "docs/leetgpu/14_jacobi_stencil_2d.py"
+    ```
+
+=== "CUDA C++"
+
+    ```cuda
+    --8<-- "docs/leetgpu/14_jacobi_stencil_2d.cu"
+    ```
+
+    Explicit shared-memory tiling, the step the Triton version leaves to the caches: a 32
+    × 8 block loads a 34 × 34 tile (32 × 32 plus a one-cell halo) once and computes four
+    outputs per thread from shared memory.
 
 ## Performance
 

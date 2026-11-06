@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Question** | *Fused LayerNorm Linear GELU* (medium) on [LeetGPU](https://leetgpu.com/challenges) · [official spec and reference](https://github.com/AlphaGPU/leetgpu-challenges/tree/main/challenges/medium/131_fused_layernorm_linear_gelu) |
-| **Solution** | [17_fused_layernorm_linear_gelu.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/17_fused_layernorm_linear_gelu.py) |
+| **Solution** | [17_fused_layernorm_linear_gelu.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/17_fused_layernorm_linear_gelu.py) (Triton) · [17_fused_layernorm_linear_gelu.cu](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/17_fused_layernorm_linear_gelu.cu) (CUDA C++) |
 | **Task** | $y = \text{GELU}_{erf}(\text{LN}(x)\,W + b)$; float32; M, K, N ≤ 8192; perf 4096³; tolerance 1e-3; inputs carry a large offset (≈ −1000) |
 | **Bound by** | compute (GEMM) |
 
@@ -33,9 +33,21 @@ This is the first half of a transformer MLP block, and the standard example of
 
 ## Code
 
-```python
---8<-- "docs/leetgpu/17_fused_layernorm_linear_gelu.py"
-```
+=== "Triton"
+
+    ```python
+    --8<-- "docs/leetgpu/17_fused_layernorm_linear_gelu.py"
+    ```
+
+=== "CUDA C++"
+
+    ```cuda
+    --8<-- "docs/leetgpu/17_fused_layernorm_linear_gelu.cu"
+    ```
+
+    Prologue and epilogue fusion in a CUDA-core GEMM: each x tile is normalized while it
+    is staged into shared memory, and bias + exact GELU (`erff`) are applied before the
+    only store. Row statistics come from a one-warp-per-row kernel.
 
 ## Performance
 

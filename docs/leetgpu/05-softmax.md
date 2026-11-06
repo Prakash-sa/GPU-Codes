@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Question** | *Softmax* (medium) on [LeetGPU](https://leetgpu.com/challenges) · [official spec and reference](https://github.com/AlphaGPU/leetgpu-challenges/tree/main/challenges/medium/5_softmax) |
-| **Solution** | [05_softmax.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/05_softmax.py) |
+| **Solution** | [05_softmax.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/05_softmax.py) (Triton) · [05_softmax.cu](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/05_softmax.cu) (CUDA C++) |
 | **Task** | $\sigma(x)_i = e^{x_i - \max x} / \sum_j e^{x_j - \max x}$ over the whole array, float32, N ≤ 500K; tolerance 1e-5 |
 | **Bound by** | launch overhead on H100, bandwidth on T4 (only 6 MB moved) |
 
@@ -30,9 +30,21 @@ all-80.0 input, which overflows a naive `exp`.
 
 ## Code
 
-```python
---8<-- "docs/leetgpu/05_softmax.py"
-```
+=== "Triton"
+
+    ```python
+    --8<-- "docs/leetgpu/05_softmax.py"
+    ```
+
+=== "CUDA C++"
+
+    ```cuda
+    --8<-- "docs/leetgpu/05_softmax.cu"
+    ```
+
+    Each thread keeps a running (max, sum) with the online-softmax update, and the block
+    merges them with shuffles. Same two-kernel structure as the Triton version; every
+    block re-merges the few hundred partials instead of launching a third kernel.
 
 ## Performance
 

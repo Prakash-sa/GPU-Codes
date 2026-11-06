@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Question** | *General Matrix Multiplication (GEMM)* (medium) on [LeetGPU](https://leetgpu.com/challenges) · [official spec and reference](https://github.com/AlphaGPU/leetgpu-challenges/tree/main/challenges/medium/22_gemm) |
-| **Solution** | [09_gemm.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/09_gemm.py) |
+| **Solution** | [09_gemm.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/09_gemm.py) (Triton) · [09_gemm.cu](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/09_gemm.cu) (CUDA C++) |
 | **Task** | $C = \alpha AB + \beta C$, FP16 in and out; 16 ≤ M, N, K ≤ 4096; perf 1024³; tolerance 0.05 |
 | **Bound by** | tensor-core compute (at 1024³ on H100: latency, since the problem is small) |
 
@@ -29,9 +29,23 @@ Three optimizations on top of that:
 
 ## Code
 
-```python
---8<-- "docs/leetgpu/09_gemm.py"
-```
+=== "Triton"
+
+    ```python
+    --8<-- "docs/leetgpu/09_gemm.py"
+    ```
+
+=== "CUDA C++"
+
+    ```cuda
+    --8<-- "docs/leetgpu/09_gemm.cu"
+    ```
+
+    A register-tiled **CUDA-core** GEMM: 64 × 64 tile per block, 16-wide K steps through
+    shared memory, a 4 × 4 sub-tile per thread (8 shared loads feed 16 FMAs), and the
+    fused alpha/beta epilogue. This is the readable baseline. The Triton version's
+    `tl.dot` uses the **tensor cores**, so on A100/H100 expect it to be several times
+    faster; the CUDA way to get there is WMMA / `mma.sync`, or cuBLAS / CUTLASS.
 
 ## Performance
 

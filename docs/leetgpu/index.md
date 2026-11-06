@@ -1,15 +1,19 @@
-# LeetGPU solutions in Triton
+# LeetGPU solutions in Triton and CUDA
 
-Optimized Triton solutions for 20 [LeetGPU](https://leetgpu.com/challenges) challenges, in
+Optimized Triton and CUDA C++ solutions for 20 [LeetGPU](https://leetgpu.com/challenges) challenges, in
 the order that builds up the most useful GPU skills: bandwidth basics, then reductions,
 fusion, matmul, irregular access, scientific kernels, and finally attention and backward
 passes.
 
-Each challenge has two files:
+Each challenge has three files:
 
-- **`NN_name.py`**: the kernels and a `solve()` with LeetGPU's exact signature. Paste the
+- **`NN_name.py`**: Triton kernels and a `solve()` with LeetGPU's exact signature. Paste the
   file's top half into LeetGPU unchanged. Its `__main__` block tests awkward sizes and
   benchmarks against PyTorch.
+- **`NN_name.cu`**: the same problem in CUDA C++, with LeetGPU's CUDA signature
+  (`extern "C" void solve(...)` on device pointers). Paste the whole file into LeetGPU's
+  CUDA editor. Where Triton leaves something to the compiler (shared-memory tiles, warp
+  shuffles, bank-conflict padding), the CUDA version writes it out.
 - **`NN-name.md`**: the explanation. It covers the idea (with a figure where it helps), the
   code, what bounds the kernel, where its data lives (registers, shared memory, L2, DRAM),
   changes for T4 vs H100, how to benchmark and profile it,
@@ -92,6 +96,48 @@ TRITON_INTERPRET=1 python docs/leetgpu/09_gemm.py   # no GPU: kernels run on the
     **official spec and reference implementation** in
     [AlphaGPU/leetgpu-challenges](https://github.com/AlphaGPU/leetgpu-challenges), which
     is where the signatures, tolerances and performance sizes come from.
+
+## Running the CUDA versions
+
+On LeetGPU, select CUDA and paste the `.cu` file. On your own NVIDIA GPU, the test driver
+builds each file with `nvcc` and runs the same cases as the Triton tests on CUDA tensors:
+
+```bash
+python tests/cuda/run_tests.py --gpu              # all 20, plus the stencil kernels
+python tests/cuda/run_tests.py --gpu 09_gemm      # one file
+```
+
+Without a GPU (on a Mac, for example), two checks still run in Docker:
+
+```bash
+# 1. Correctness: compile each .cu for the CPU against tests/cuda/cuda_cpu.h and compare
+#    with PyTorch on the same cases as the Triton tests.
+docker build -t cuda-cpu-test - <<'EOF'
+FROM python:3.11-slim
+RUN apt-get update && apt-get install -y --no-install-recommends g++ \
+ && pip install --no-cache-dir numpy torch --index-url https://download.pytorch.org/whl/cpu
+EOF
+docker run --rm -v "$PWD":/w -w /w cuda-cpu-test python tests/cuda/run_tests.py
+
+# 2. Compilation: the real nvcc, for sm_75 (T4), sm_80 (A100) and sm_90 (H100), with
+#    warnings as errors; prints registers per thread and spills.
+docker run --rm -v "$PWD":/w -w /w nvidia/cuda:12.6.3-devel-ubuntu24.04 \
+    bash tests/cuda/nvcc_check.sh
+```
+
+`cuda_cpu.h` is a deliberately strict CPU stand-in, not a GPU simulator. Each block's
+threads run as real OS threads, `__syncthreads` is a real barrier, and warp shuffles
+exchange values through a per-warp barrier. A missing `__syncthreads`, a shared-memory
+race or a wrong shuffle therefore gives wrong answers: deleting one `__syncthreads` from
+the transpose or the Jacobi tile, or breaking one step of the scan's shuffle, makes their
+tests fail. It cannot tell you anything about speed, occupancy or tensor cores.
+
+!!! info "What has been verified for CUDA"
+    All 20 `.cu` files (and `notes/stencil_ops.cu`) pass the CPU-emulation tests on the
+    same cases as the Triton versions, and compile with nvcc 12.6 for sm_75, sm_80 and
+    sm_90 with warnings as errors and no register spills. They have **not** been run on
+    an NVIDIA GPU yet, so no CUDA timings are quoted; `run_tests.py --gpu` is the first
+    thing to run on real hardware.
 
 ## Videos used across the pages
 

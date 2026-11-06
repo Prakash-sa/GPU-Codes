@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Question** | *Softmax Attention* (medium) on [LeetGPU](https://leetgpu.com/challenges) · [official spec and reference](https://github.com/AlphaGPU/leetgpu-challenges/tree/main/challenges/medium/6_softmax_attention) |
-| **Solution** | [18_softmax_attention.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/18_softmax_attention.py) |
+| **Solution** | [18_softmax_attention.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/18_softmax_attention.py) (Triton) · [18_softmax_attention.cu](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/18_softmax_attention.cu) (CUDA C++) |
 | **Task** | $\text{softmax}(QK^T/\sqrt d)\,V$; Q: M × d, K, V: N × d; d ≤ 128; float32; perf M = 512, N = 256, d = 128; tolerance 1e-4 |
 | **Bound by** | latency at the perf size; compute (`tl.dot`) at large sizes |
 
@@ -31,9 +31,22 @@ Small details that matter:
 
 ## Code
 
-```python
---8<-- "docs/leetgpu/18_softmax_attention.py"
-```
+=== "Triton"
+
+    ```python
+    --8<-- "docs/leetgpu/18_softmax_attention.py"
+    ```
+
+=== "CUDA C++"
+
+    ```cuda
+    --8<-- "docs/leetgpu/18_softmax_attention.cu"
+    ```
+
+    One block per query row streams K and V in tiles of 64 keys with the online softmax;
+    each warp computes scores with a lane-split dot product, and thread c owns output
+    column c. A production FlashAttention kernel tiles queries too and uses tensor cores
+    for both products; this is the same algorithm in its plainest form.
 
 ## Performance
 

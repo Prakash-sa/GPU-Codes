@@ -49,6 +49,22 @@ the code.
 | Register spills (`k.n_spills > 0`) | "local memory": per-thread, but physically in **DRAM** (cached in L1/L2). Spills turn register traffic into memory traffic |
 | `cache_modifier=".cg"` / `eviction_policy="evict_first"` on a load | hints: skip L1, or mark the line as first to evict from L2. Use them for data read exactly once |
 
+### The same levels in the CUDA versions
+
+In CUDA the choice is written in the source. The `.cu` files use these constructs:
+
+| In the CUDA code | Where it lives or runs |
+|---|---|
+| Scalar locals, small arrays indexed by compile-time constants (`float acc[4][4]`, `float z[16]` under `#pragma unroll`) | **registers** |
+| An array indexed by a run-time value, or too many live values | **local memory** (DRAM, cached in L1/L2): a spill. `nvcc -Xptxas -v` prints the spill bytes; `tests/cuda/nvcc_check.sh` shows 0 for every file |
+| `__shared__ float tile[32][33];` | **shared memory**, one copy per block. The `+1` column avoids bank conflicts (02 transpose) |
+| `__syncthreads()` | a barrier for the block: needed between writing shared memory and other threads reading it |
+| `__shfl_xor_sync` / `__shfl_down_sync` / `__shfl_up_sync` | register-to-register exchange inside a warp; no memory at all (03, 05, 16) |
+| `x[i]` on a global pointer | DRAM through L2 (and L1); coalesced when consecutive threads read consecutive addresses |
+| `const float* __restrict__` | lets the compiler use the read-only data path for loads (what `__ldg` asks for explicitly) |
+| `atomicAdd(&out[i], v)` | the atomic units in **L2** (11 scatter add) |
+| `float4` loads | one 16-byte access per thread instead of four 4-byte ones (01 vector add) |
+
 The tensor-core path differs by generation:
 
 - **T4 (sm_75):** `mma` instructions take operands from registers. Tiles go DRAM →

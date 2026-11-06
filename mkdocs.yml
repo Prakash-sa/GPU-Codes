@@ -16,6 +16,7 @@ theme:
     - navigation.footer
     - search.highlight
     - content.code.copy
+    - content.tabs.link
     - content.action.edit
   font:
     text: Comic Neue
@@ -44,6 +45,8 @@ markdown_extensions:
   - toc:
       permalink: true
   - pymdownx.details
+  - pymdownx.tabbed:
+      alternate_style: true
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.inlinehilite
@@ -164,7 +167,7 @@ nav:
           - "Chapter 56: What kernel time measures": notes/before-gpu/the-measurement-mandate/chapter-56.md
       # end before-gpu nav
   - Interview Q&A: interview-qa.md
-  - LeetGPU solutions (Triton):
+  - LeetGPU solutions (Triton + CUDA):
       - Overview: leetgpu/index.md
       - Benchmark, profile, scale: leetgpu/benchmarking.md
       - Where the data lives: leetgpu/memory-hierarchy.md

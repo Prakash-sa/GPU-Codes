@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Question** | *Dot Product* (medium) on [LeetGPU](https://leetgpu.com/challenges) · [official spec and reference](https://github.com/AlphaGPU/leetgpu-challenges/tree/main/challenges/medium/17_dot_product) |
-| **Solution** | [04_dot_product.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/04_dot_product.py) |
+| **Solution** | [04_dot_product.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/04_dot_product.py) (Triton) · [04_dot_product.cu](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/04_dot_product.cu) (CUDA C++) |
 | **Task** | `result[0] = sum(A * B)`, float32; perf N = 4,194,304; tolerance 1e-5 |
 | **Bound by** | memory bandwidth (2 FLOPs per 8 bytes) |
 
@@ -16,9 +16,20 @@ Partials are combined in float64 for accuracy and determinism.
 
 ## Code
 
-```python
---8<-- "docs/leetgpu/04_dot_product.py"
-```
+=== "Triton"
+
+    ```python
+    --8<-- "docs/leetgpu/04_dot_product.py"
+    ```
+
+=== "CUDA C++"
+
+    ```cuda
+    --8<-- "docs/leetgpu/04_dot_product.cu"
+    ```
+
+    The reduction from 03 with the multiply fused into the load loop as an `fmaf`.
+    Partials are added in double in a fixed order.
 
 ## Performance
 

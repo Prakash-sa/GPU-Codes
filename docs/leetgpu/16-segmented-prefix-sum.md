@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Question** | *Segmented Exclusive Prefix Sum* (medium) on [LeetGPU](https://leetgpu.com/challenges) · [official spec and reference](https://github.com/AlphaGPU/leetgpu-challenges/tree/main/challenges/medium/70_segmented_prefix_sum) |
-| **Solution** | [16_segmented_prefix_sum.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/16_segmented_prefix_sum.py) |
+| **Solution** | [16_segmented_prefix_sum.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/16_segmented_prefix_sum.py) (Triton) · [16_segmented_prefix_sum.cu](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/16_segmented_prefix_sum.cu) (CUDA C++) |
 | **Task** | `flags[i] = 1` starts a segment; `out[i]` = sum of the earlier values in i's segment; N ≤ 100M; perf N = 50M (segments of 256); tolerance 1e-3 |
 | **Bound by** | memory bandwidth (H100); FP64 throughput risk on T4 |
 
@@ -38,9 +38,21 @@ is therefore scanned in **FP64**.
 
 ## Code
 
-```python
---8<-- "docs/leetgpu/16_segmented_prefix_sum.py"
-```
+=== "Triton"
+
+    ```python
+    --8<-- "docs/leetgpu/16_segmented_prefix_sum.py"
+    ```
+
+=== "CUDA C++"
+
+    ```cuda
+    --8<-- "docs/leetgpu/16_segmented_prefix_sum.cu"
+    ```
+
+    Three phases as in the Triton version, with the segmented scan done by warp shuffles
+    (`__shfl_up_sync` on the (value, flag) pair) plus one shared-memory step per block.
+    Phase 2 is one block of 1024 threads scanning the block aggregates. All in double.
 
 ## Performance
 

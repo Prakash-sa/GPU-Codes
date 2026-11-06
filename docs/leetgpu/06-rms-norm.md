@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Question** | *RMS Normalization* (medium) on [LeetGPU](https://leetgpu.com/challenges) · [official spec and reference](https://github.com/AlphaGPU/leetgpu-challenges/tree/main/challenges/medium/50_rms_normalization) |
-| **Solution** | [06_rms_norm.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/06_rms_norm.py) |
+| **Solution** | [06_rms_norm.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/06_rms_norm.py) (Triton) · [06_rms_norm.cu](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/06_rms_norm.cu) (CUDA C++) |
 | **Task** | $y = \gamma \cdot x / \sqrt{\text{mean}(x^2) + \epsilon} + \beta$ with **scalar** γ, β; N ≤ 100K; tolerance 1e-5 |
 | **Bound by** | launch overhead (1.2 MB of traffic) |
 
@@ -19,9 +19,20 @@ elementwise pass.
 
 ## Code
 
-```python
---8<-- "docs/leetgpu/06_rms_norm.py"
-```
+=== "Triton"
+
+    ```python
+    --8<-- "docs/leetgpu/06_rms_norm.py"
+    ```
+
+=== "CUDA C++"
+
+    ```cuda
+    --8<-- "docs/leetgpu/06_rms_norm.cu"
+    ```
+
+    Two kernels: per-block partial sums of x², then every block re-adds the partials (in
+    double), computes the scale once and writes its part.
 
 ## Performance
 

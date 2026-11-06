@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Question** | *Sparse Matrix-Dense Matrix Multiplication* (medium) on [LeetGPU](https://leetgpu.com/challenges) · [official spec and reference](https://github.com/AlphaGPU/leetgpu-challenges/tree/main/challenges/medium/75_sparse_matrix_dense_matrix_multiplication) |
-| **Solution** | [15_spmm.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/15_spmm.py) |
+| **Solution** | [15_spmm.py](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/15_spmm.py) (Triton) · [15_spmm.cu](https://github.com/Prakash-sa/GPU-Codes/blob/main/docs/leetgpu/15_spmm.cu) (CUDA C++) |
 | **Task** | C = A·B, A is M × N with **60–70% zeros, stored dense**, B dense N × K, float32; perf 4096 × 2048 × 512; tolerance 1e-3 |
 | **Bound by** | compute |
 
@@ -30,9 +30,21 @@ which is near-FP32 accuracy at well above the FP32 CUDA-core rate.
 
 ## Code
 
-```python
---8<-- "docs/leetgpu/15_spmm.py"
-```
+=== "Triton"
+
+    ```python
+    --8<-- "docs/leetgpu/15_spmm.py"
+    ```
+
+=== "CUDA C++"
+
+    ```cuda
+    --8<-- "docs/leetgpu/15_spmm.cu"
+    ```
+
+    A register-tiled FP32 GEMM on the CUDA cores. It is exact FP32 (no TF32 precision
+    question), so it passes the 1e-3 tolerance directly; the Triton version reaches the
+    same accuracy on tensor cores with `tf32x3`.
 
 ## Performance
 
