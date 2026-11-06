@@ -397,6 +397,36 @@ def stencil(lib):
         check(f"lap3d  {nz}x{ny}x{nx}", out[1:-1, 1:-1, 1:-1], want, 1e-4, 1e-4)
 
 
+def t21(lib):
+    f = fn(lib, "solve", P, P, P, I, I, I)
+    for M, N, K in [(2, 2, 2), (1, 3, 1), (1, 1, 1), (1, 5, 3), (5, 3, 1), (2, 3, 1), (8, 6, 10),
+                    (32, 8, 16), (8, 16, 32), (130, 70, 129), (129, 64, 132), (200, 257, 140),
+                    (16, 6144, 132)]:
+        A, B = torch.empty(M, N).uniform_(-1, 1), torch.empty(N, K).uniform_(-1, 1)
+        C = torch.zeros(M, K)
+        f(ptr(A), ptr(B), ptr(C), M, N, K)
+        check(f"matmul {M}x{N}x{K}", C, A @ B, 1e-4, 1e-4)
+
+
+def t22(lib):
+    f = fn(lib, "solve", P, P, P, I, I, I)
+    for M, N in [(1, 1), (2, 2), (3, 4), (10, 8), (20, 20), (7, 130), (33, 2048), (5, 2049), (9, 4100), (6, 4103)]:
+        A = torch.empty(M, N).uniform_(-10, 10) * (torch.rand(M, N) > 0.65)
+        x, y = torch.empty(N).uniform_(-5, 5), torch.zeros(M)
+        f(ptr(A), ptr(x), ptr(y), M, N, int((A != 0).sum()))
+        check(f"spmv {M}x{N}", y, A @ x, 1e-3, 1e-3)
+
+
+def t23(lib):
+    f = fn(lib, "solve", P, P, P, I, I, I, I)
+    for Bt, M, N, K in [(2, 2, 2, 3), (1, 3, 3, 3), (4, 2, 2, 2), (8, 4, 3, 2), (16, 16, 16, 16),
+                        (2, 8, 6, 4), (3, 70, 65, 33), (2, 64, 64, 64)]:
+        A, B = torch.empty(Bt, M, K).uniform_(-1, 1), torch.empty(Bt, K, N).uniform_(-1, 1)
+        C = torch.zeros(Bt, M, N)
+        f(ptr(A), ptr(B), ptr(C), Bt, M, N, K)
+        check(f"bmm {Bt}x{M}x{N}x{K}", C, torch.bmm(A, B), 1e-5, 1e-5)
+
+
 def warp(lib):
     """notes/warp_primitives.cu: shuffles, votes, match, reduce, cooperative groups."""
     U = ctypes.c_uint
@@ -499,7 +529,7 @@ def warp(lib):
         check(f"grid.sync normalize n={n}", y, x / x.double().sum(), 1e-6, 1e-4)
 
 
-TESTS = {f"{n:02d}": globals()[f"t{n:02d}"] for n in range(1, 21)}
+TESTS = {f"{n:02d}": globals()[f"t{n:02d}"] for n in range(1, 24)}
 EXTRA = {"stencil_ops": stencil, "warp_primitives": warp}
 
 

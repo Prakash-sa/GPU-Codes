@@ -1,6 +1,6 @@
 # LeetGPU solutions in Triton and CUDA
 
-Optimized Triton and CUDA C++ solutions for 20 [LeetGPU](https://leetgpu.com/challenges) challenges, in
+Optimized Triton and CUDA C++ solutions for 23 [LeetGPU](https://leetgpu.com/challenges) challenges, in
 the order that builds up the most useful GPU skills: bandwidth basics, then reductions,
 fusion, matmul, irregular access, scientific kernels, and finally attention and backward
 passes.
@@ -50,6 +50,9 @@ saying where its own data sits.
 | [18](18-softmax-attention.md) | Softmax Attention | online softmax (FlashAttention) | latency / compute | GIF |
 | [19](19-rms-norm-backward.md) | RMS Norm Backward | row + column reductions, no atomics | bandwidth | PNG |
 | [20](20-layer-norm-backward.md) | Layer Norm Backward | same, three outputs | bandwidth | PNG |
+| [21](21-matrix-multiplication.md) | Matrix Multiplication (FP32) | SGEMM register blocking, summation order vs a 1e-4 tolerance | compute | GIF |
+| [22](22-spmv.md) | Sparse Matrix-Vector Multiplication | count the bytes: dense GEMV beats CSR on dense-stored input | bandwidth | |
+| [23](23-batched-matmul.md) | Batched Matrix Multiplication (FP32) | batch on the grid, tile size vs program count, exact FP32 | compute / latency | |
 
 ## Running the solutions
 
@@ -103,7 +106,7 @@ On LeetGPU, select CUDA and paste the `.cu` file. On your own NVIDIA GPU, the te
 builds each file with `nvcc` and runs the same cases as the Triton tests on CUDA tensors:
 
 ```bash
-python tests/cuda/run_tests.py --gpu              # all 20, plus the stencil kernels
+python tests/cuda/run_tests.py --gpu              # all 23, plus the notes' kernels
 python tests/cuda/run_tests.py --gpu 09_gemm      # one file
 ```
 
@@ -134,7 +137,7 @@ the transpose or the Jacobi tile, or breaking one step of the scan's shuffle, ma
 tests fail. It cannot tell you anything about speed, occupancy or tensor cores.
 
 !!! info "What has been verified for CUDA"
-    All 20 `.cu` files (and `notes/stencil_ops.cu` and `notes/warp_primitives.cu`) pass the CPU-emulation tests on the
+    All 23 `.cu` files (and `notes/stencil_ops.cu` and `notes/warp_primitives.cu`) pass the CPU-emulation tests on the
     same cases as the Triton versions, and compile with nvcc 12.6 for sm_75, sm_80 and
     sm_90 with warnings as errors and no register spills. They have **not** been run on
     an NVIDIA GPU yet, so no CUDA timings are quoted; `run_tests.py --gpu` is the first

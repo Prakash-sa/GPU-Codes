@@ -26,7 +26,7 @@ GPU stacks) and a GPU hardware reference sheet.
 | [Interview Q&A](docs/interview-qa.md) | GPU, ML-systems and multi-GPU interview questions with short answers |
 | [Before GPU Engineering](docs/notes/before-gpu/index.md) | 56-chapter first-principles notebook on GPU hardware by Ranjan Yadav (MIT), imported into the notes |
 | [Cheat sheet](docs/notes/cheatsheet.md) | Quick reference of APIs, limits and formulas |
-| [LeetGPU solutions (Triton + CUDA)](docs/leetgpu/index.md) | 20 challenges: one `.py` (Triton kernel + `solve()` + tests), one `.cu` (CUDA C++ `solve()`) and one `.md` (explanation, T4 vs H100, profiling, scaling, videos) each. See also [benchmark, profile, scale](docs/leetgpu/benchmarking.md) |
+| [LeetGPU solutions (Triton + CUDA)](docs/leetgpu/index.md) | 23 challenges: one `.py` (Triton kernel + `solve()` + tests), one `.cu` (CUDA C++ `solve()`) and one `.md` (explanation, T4 vs H100, profiling, scaling, videos) each. See also [benchmark, profile, scale](docs/leetgpu/benchmarking.md) |
 
 ## Building locally
 

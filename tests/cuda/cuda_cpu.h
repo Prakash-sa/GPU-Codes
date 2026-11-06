@@ -40,6 +40,7 @@
 #define __noinline__
 #define __restrict__ __restrict
 #define __launch_bounds__(...)
+#define __align__(n) __attribute__((aligned(n)))
 #define __shared__ static
 
 struct dim3 {

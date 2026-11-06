@@ -192,3 +192,6 @@ nav:
       - 18. Softmax attention: leetgpu/18-softmax-attention.md
       - 19. RMSNorm backward: leetgpu/19-rms-norm-backward.md
       - 20. LayerNorm backward: leetgpu/20-layer-norm-backward.md
+      - 21. Matrix multiplication (FP32): leetgpu/21-matrix-multiplication.md
+      - 22. Sparse matrix-vector multiply: leetgpu/22-spmv.md
+      - 23. Batched matmul (FP32): leetgpu/23-batched-matmul.md
